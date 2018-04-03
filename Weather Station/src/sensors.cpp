@@ -192,27 +192,18 @@ ISR(PCINT0_vect) {
     }
 }
 
-void set8(uint8_t* index, uint8_t val) {
-    *index = val;
-}
-
-void set16(uint8_t* index, uint16_t val) {
-    set8(index, (val >> 8) & 0xFF);
-    set8(index + 1, val & 0xFF);
-}
-
 void sensors::loadPacket(uint8_t* packet) {
-    set16(packet + WIND_SPEED_LOC, getWindSpeed());
-    set16(packet + WIND_DIREC_LOC, getWindDirection());
-    set16(packet + WIND_MAX_SPEED_LOC, getMaxWindSpeed());
-    set16(packet + WIND_MAX_DIREC_LOC, getMaxWindDirection());
-    set16(packet + WIND_AVG_SPEED_LOC, getAverageWindSpeed());
-    set16(packet + WIND_AVG_DIREC_LOC, getAverageWindDirection());
+    main::set16(packet + WIND_SPEED_LOC, getWindSpeed());
+    main::set16(packet + WIND_DIREC_LOC, getWindDirection());
+    main::set16(packet + WIND_MAX_SPEED_LOC, getMaxWindSpeed());
+    main::set16(packet + WIND_MAX_DIREC_LOC, getMaxWindDirection());
+    main::set16(packet + WIND_AVG_SPEED_LOC, getAverageWindSpeed());
+    main::set16(packet + WIND_AVG_DIREC_LOC, getAverageWindDirection());
 
-    set16(packet + HUMIDITY_LOC, getHumidity());
-    set16(packet + TEMPERATURE_LOC, getTemperature());
-    set8(packet + RAIN_LOC, getRainFall());
-    set16(packet + PRESSURE_LOC, getPressure());
+    main::set16(packet + HUMIDITY_LOC, getHumidity());
+    main::set16(packet + TEMPERATURE_LOC, getTemperature());
+    main::set8(packet + RAIN_LOC, getRainFall());
+    main::set16(packet + PRESSURE_LOC, getPressure());
 }
 
 void sensors::reset() {

@@ -25,6 +25,40 @@ void radio::begin() {
     active = false;
 }
 
+
+/**
+ * Set an eeprom value with the given data array
+ *
+ * @return number of bytes used
+ */
+uint8_t setValue(uint8_t* data) {
+#define getX(x, y) (x == 1 ? main::get8(y) : (x == 2 ? main::get16(y) : main::get32(y)))
+
+    switch(*data) {
+    case ALIAS_WIND_TICK:
+        eeprom::wind::ticks = getX(WIND_TICK_SIZE, data + 1);
+        return WIND_TICK_SIZE + 1;
+    case ALIAS_WIND_READ_TIME:
+        eeprom::wind::readTime = getX(WIND_READ_TIME_SIZE, data + 1);
+        return WIND_READ_TIME_SIZE + 1;
+    case ALIAS_WIND_AVG_UPDATE_TIME:
+        eeprom::wind::averageUpdateTime = getX(WIND_AVG_UPDATE_TIME_SIZE, data + 1);
+        return WIND_AVG_UPDATE_TIME_SIZE + 1;
+    case ALIAS_WIND_AVG_STORAGE_TIME:
+        eeprom::wind::averageStorageTime = getX(WIND_AVG_STORAGE_TIME_SIZE, data + 1);
+        return WIND_AVG_STORAGE_TIME_SIZE + 1;
+
+    case ALIAS_PRES_ALTITUDE:
+        eeprom::pressure::altitude = getX(PRES_ALTITUDE_SIZE, data + 1);
+        return PRES_ALTITUDE_SIZE + 1;
+
+    case ALIAS_REFRESH_TIME:
+        eeprom::refreshTime = getX(REFRESH_TIME_SIZE, data + 1);
+        return REFRESH_TIME_SIZE + 1;
+    }
+    return 0;
+}
+
 void radio::update() {
 
     static long updateTime(0);
@@ -67,9 +101,31 @@ void radio::update() {
     if(active) {
 
         if(radio.available()) {
-            //TODO read commands from the base station
+            uint8_t data[PACKET_SIZE];
+
+            //read every availabe packet
+            while(radio.available()) {
+                radio.read(data, PACKET_SIZE);
+
+                //commands can be nested in packets, process each command
+
+                uint8_t i = 0;
+                while(data[i] != EOT && i < PACKET_SIZE) {
+                    if(data[i] == COMMAND_SET_VALUE) {
+                        i += setValue(data + i + 1);
+                    } else if(data[i] == COMMAND_SET_EEPROM) {
+                        eeprom::setEEPROM();
+                    } else if(data[i] == COMMAND_LOAD_EEPROM) {
+                        eeprom::loadEEPROM();
+                    } else if(data[i] == COMMAND_RESET) {
+                        //TODO reset
+                    }
+                    i++;
+                }
+            }
         }
 
+        //stop listening for commands and power down after [LISTEN_TIME] ms
         if(millis() - updateTime > LISTEN_TIME) {
             active = false;
             radio.stopListening();
