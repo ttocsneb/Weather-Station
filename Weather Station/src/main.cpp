@@ -1,5 +1,6 @@
 #include "main.h"
 #include "sensors.h"
+#include "radio.h"
 
 #include "eprom.h"
 
@@ -20,11 +21,10 @@ void setup() {
     setupInputs();
     digitalWrite(LED, HIGH);
 
+
     DEBUG_BEGIN(115200);
 #ifdef DEBUG
-    DEBUG_PRINTLN("OPENING DEBUGGER");
     delay(3000);
-    DEBUG_PRINTLN("OPENING DEBUGGER");
 #endif
 
 
@@ -34,7 +34,7 @@ void setup() {
 
     sensors::begin();
 
-
+    radio::begin();
 
 
     digitalWrite(LED, LOW);
@@ -44,21 +44,12 @@ int tick;
 
 void loop() {
     sensors::update();
+    radio::update();
     tick++;
 
     if(tick == 300) {
-        DEBUG_PRINT("wind: ");
-        DEBUG_PRINTLN(sensors::getWindSpeed());
-        DEBUG_PRINT("max: ");
-        DEBUG_PRINTLN(sensors::getMaxWindSpeed());
-        DEBUG_PRINT("avg: ");
-        DEBUG_PRINTLN(sensors::getAverageWindSpeed());
-        DEBUG_PRINT("direction: ");
-        DEBUG_PRINTLN(sensors::getWindDirection());
-        DEBUG_PRINT("max: ");
-        DEBUG_PRINTLN(sensors::getMaxWindDirection());
-        DEBUG_PRINT("avg: ");
-        DEBUG_PRINTLN(sensors::getAverageWindDirection());
+        DEBUG_PRINT("lostPackets: ");
+        DEBUG_PRINTLN(radio::lostPackets);
         tick = 0;
     }
 

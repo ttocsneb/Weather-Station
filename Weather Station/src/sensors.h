@@ -11,6 +11,18 @@
 #include <FaBoBarometer_MPL115.h>
 #include <Wire.h>
 
+#define WIND_SPEED_LOC 0
+#define WIND_DIREC_LOC 2
+#define WIND_MAX_SPEED_LOC 4
+#define WIND_MAX_DIREC_LOC 6
+#define WIND_AVG_SPEED_LOC 8
+#define WIND_AVG_DIREC_LOC 10
+
+#define HUMIDITY_LOC 12
+#define TEMPERATURE_LOC 14
+#define RAIN_LOC 16
+#define PRESSURE_LOC 17
+
 namespace sensors {
 
 extern uint16_t maxWind;
@@ -20,7 +32,7 @@ extern uint16_t averageWind;
 extern uint16_t averageDirection;
 
 
-extern uint8_t rain;
+extern volatile uint8_t rain;
 
 extern DHT dht;
 extern FaBoBarometer baro;
@@ -30,6 +42,7 @@ void begin();
 void update();
 
 void loadPacket(uint8_t* packet);
+void reset();
 
 uint16_t getWindSpeed();
 uint16_t getWindDirection();

@@ -3,20 +3,19 @@
 #include "queue.h"
 #include "eprom.h"
 
-uint8_t sensors::rain = 0;
-
 DHT sensors::dht(DHTPIN, DHTTYPE);
 FaBoBarometer sensors::baro;
 
-QueueArray<uint8_t> ticks;
+uint16_t sensors::maxWind;
+uint16_t sensors::maxDirection;
+uint16_t sensors::averageWind;
+uint16_t sensors::averageDirection;
+
+volatile uint8_t sensors::rain;
+
+QueueArray<uint8_t> windTick;
 QueueArray<uint16_t> averageSpeed;
 QueueArray<uint8_t> averageDir;
-
-uint16_t sensors::maxWind = 0;
-uint16_t sensors::maxDirection = 0;
-uint16_t sensors::averageWind = 0;
-uint16_t sensors::averageDirection = 0;
-
 
 uint16_t rpm;
 
@@ -24,14 +23,17 @@ void sensors::begin() {
     dht.begin();
     baro.begin();
 
+    //setup rain interrupt
     PCICR = 1;
     PCMSK0 |= 1 << digitalPinToPCMSKbit(RAIN);
+
+    reset();
 
     //fill the queue with empty data
     uint8_t s = eeprom::wind::ticks;
     while(s--) {
         DEBUG_PRINTLN(s);
-        ticks.push(0);
+        windTick.push(0);
     }
 
     s = eeprom::wind::averageTimeN;
@@ -40,10 +42,6 @@ void sensors::begin() {
         averageSpeed.push(0);
         averageDir.push(dir);
     }
-
-}
-
-void sensors::loadPacket(uint8_t* packet) {
 
 }
 
@@ -73,8 +71,8 @@ void sensors::update() {
     if(millis() - lastWindTime > eeprom::wind::tickDelay) {
         lastWindTime = millis();
         rpm = 0;
-        for(uint8_t i = 0; i < ticks.count(); i++) {
-            rpm += ticks[i];
+        for(uint8_t i = 0; i < windTick.count(); i++) {
+            rpm += windTick[i];
         }
         rpm *= eeprom::wind::tickMultiplier;
 
@@ -83,14 +81,14 @@ void sensors::update() {
             maxDirection = getWindDirection();
         }
 
-        ticks.pop();
-        ticks.push(0);
+        windTick.pop();
+        windTick.push(0);
     }
 
     if(lastWindState != digitalRead(WIND)) {
         lastWindState = !lastWindState;
         if(lastWindState) {
-            ticks[ticks.count() - 1] = ticks[ticks.count() - 1] + 1;
+            windTick[windTick.count() - 1] = windTick[windTick.count() - 1] + 1;
         }
     }
 
@@ -192,4 +190,32 @@ ISR(PCINT0_vect) {
         DEBUG_PRINTLN("RainTick!");
         sensors::rain++;
     }
+}
+
+void set8(uint8_t* index, uint8_t val) {
+    *index = val;
+}
+
+void set16(uint8_t* index, uint16_t val) {
+    set8(index, (val >> 8) & 0xFF);
+    set8(index + 1, val & 0xFF);
+}
+
+void sensors::loadPacket(uint8_t* packet) {
+    set16(packet + WIND_SPEED_LOC, getWindSpeed());
+    set16(packet + WIND_DIREC_LOC, getWindDirection());
+    set16(packet + WIND_MAX_SPEED_LOC, getMaxWindSpeed());
+    set16(packet + WIND_MAX_DIREC_LOC, getMaxWindDirection());
+    set16(packet + WIND_AVG_SPEED_LOC, getAverageWindSpeed());
+    set16(packet + WIND_AVG_DIREC_LOC, getAverageWindDirection());
+
+    set16(packet + HUMIDITY_LOC, getHumidity());
+    set16(packet + TEMPERATURE_LOC, getTemperature());
+    set8(packet + RAIN_LOC, getRainFall());
+    set16(packet + PRESSURE_LOC, getPressure());
+}
+
+void sensors::reset() {
+    maxWind = 0;
+    rain = 0;
 }
