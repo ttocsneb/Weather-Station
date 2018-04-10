@@ -1,7 +1,7 @@
 #ifndef MAIN
 #define MAIN
 
-namespace main {
+namespace global {
     
 }
 
