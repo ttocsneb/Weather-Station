@@ -21,11 +21,11 @@ INCLUDES = -I$(IDIR) -I$(LIB_INC) -L$(LIB) -lrf24
 
 
 # Dependency files
-_DEPS = main.h
+_DEPS = main.h radio.h
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 
 # object files
-_OBJ = main.o
+_OBJ = main.o radio.o
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 
 
