@@ -15,6 +15,10 @@
 #define BATTPIN A9
 #define VAINPIN A0
 
+#define SOLARVOLTAGEPIN A1
+#define SOLARENABLEPIN 20
+#define BATTERY_POLL_TIME 5000
+
 namespace main {
 
 void set8(uint8_t* index, uint8_t val);
@@ -28,6 +32,10 @@ uint8_t get8(uint8_t* index);
 uint16_t get16(uint8_t* index);
 
 uint32_t get32(uint8_t* index);
+
+float getSolarVoltage();
+
+extern bool isCharging;
 
 }
 
