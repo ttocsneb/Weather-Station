@@ -17,7 +17,7 @@ all: $(PROG_NAME)
 
 # Compile Flags
 CFLAGS=-Wall
-INCLUDES = -I$(IDIR) -I$(LIB_INC) -L$(LIB) -lrf24
+INCLUDES = -I$(IDIR) -I$(LIB_INC) -L$(LIB) -lrf24 -lwiringPi
 
 
 # Dependency files

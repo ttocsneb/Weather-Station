@@ -4,3 +4,6 @@
 [submodule "baseStation/lib/RF24"]
 	path = baseStation/lib/RF24
 	url = https://github.com/nRF24/RF24.git
+[submodule "baseStation/lib/wiringPi"]
+	path = baseStation/lib/wiringPi
+	url = git://git.drogon.net/wiringPi
