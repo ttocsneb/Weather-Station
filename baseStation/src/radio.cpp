@@ -1,5 +1,6 @@
 #include "radio.h"
 #include "main.h"
+#include "eprom.h"
 
 #include <iostream>
 #include <algorithm>
@@ -20,7 +21,7 @@ bool active;
 
 void radio::begin() {
     global::light(true);
-    cout << date() << " > Begin Radio" << endl;
+    cout << date() << "> Begin Radio" << endl;
 
     rad.begin();
 
@@ -36,7 +37,7 @@ void radio::begin() {
 
     rad.printDetails();
 
-    cout << date() << " < Begin Radio Complete" << endl;
+    cout << date() << "< Begin Radio Complete" << endl;
     global::light(false);
 }
 
@@ -54,7 +55,7 @@ void radio::update() {
 
     global::light(true);
 
-    cout << date() << " > Waiting for transmission" << endl;
+    cout << date() << "> Waiting for transmission" << endl;
 
     active = true;
     rad.powerUp();
@@ -65,8 +66,9 @@ void radio::update() {
 
         lost_packets = 0;
 
+        //wait for up to eeprom::refreshTime (30s) for an incomming packet
         time_point t =  Clock::now();
-        while(!successfull && timeDiff(t,  Clock::now()) < CYCLE_TIME) {
+        while(!successfull && timeDiff(t,  Clock::now()) < eeprom::refreshTime) {
             sleep_for(1s);
             global::toggleLight();
             successfull = checkForPacket();
@@ -77,14 +79,16 @@ void radio::update() {
         active = false;
         rad.powerDown();
 
+        //if a packet was received, wait until the next update time.
         if(successfull) {
-            cout << date() << "Packet received, waiting " << (CYCLE_TIME - LISTEN_TIME / 2) / 1000.0 << " seconds to sync with the station" << endl;
-            sleep_for(std::chrono::milliseconds(CYCLE_TIME - LISTEN_TIME / 2));
+            cout << date() << "Packet received, waiting " << (eeprom::refreshTime - eeprom::listenTime / 2) / 1000.0 << " seconds to sync with the station" << endl;
+            sleep_for(std::chrono::milliseconds(eeprom::refreshTime - eeprom::listenTime / 2));
         }
     } else {
 
+        //wait for an available packet
         time_point t = Clock::now();
-        while(!successfull && timeDiff(t,  Clock::now()) < LISTEN_TIME) {
+        while(!successfull && timeDiff(t,  Clock::now()) < eeprom::listenTime) {
             sleep_for(500ms);
             global::toggleLight();
             successfull = checkForPacket();
@@ -98,7 +102,7 @@ void radio::update() {
         }
     }
 
-    cout << date() << " < " << (successfull ? "Transmission Received" : "No Transmission available") << endl;
+    cout << date() << "< " << (successfull ? "Transmission Received" : "No Transmission available") << endl;
 
     if(active) {
         rad.powerDown();

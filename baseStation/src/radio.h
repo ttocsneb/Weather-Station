@@ -13,10 +13,6 @@
 #define COMMAND_RESET 'R'
 
 
-#define CYCLE_TIME 30000
-#define LISTEN_TIME 2000
-
-
 #define WIND_SPEED_LOC 0
 #define WIND_DIREC_LOC 2
 #define WIND_MAX_SPEED_LOC 4

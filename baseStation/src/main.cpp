@@ -5,6 +5,7 @@
 
 #include "main.h"
 #include "radio.h"
+#include "eprom.h"
 
 
 using std::cout;
@@ -16,6 +17,8 @@ int main(int argc, char** argv) {
     pinMode(27, OUTPUT);
 
     radio::begin();
+
+    eeprom::loadEEPROM();
 
     while(true) {
         time_point t = system_clock::now() + 30s;
