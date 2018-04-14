@@ -6,8 +6,8 @@ if [ -d "$DIRECTORY" ]; then
 	if [ ! -d "$DIRECTORY/baseStation" ]; then
 		echo "No source to copy"
 	else
-		cp -r "$DIRECTORY/baseStation/src" "$DESTINATION"
-		rm -r "$DIRECTORY/baseStation"
+		cp -r -v "$DIRECTORY/baseStation/src" "$DESTINATION"
+		rm -r -v "$DIRECTORY/baseStation"
 	fi
 else
 	echo "$DIRECTORY does not exist."
