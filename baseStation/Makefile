@@ -1,4 +1,5 @@
 CXX=ccache g++
+TIME=/usr/bin/time --format="Build Duration: %E" 
 
 # directories
 
@@ -13,7 +14,21 @@ LIB=/usr/local/lib
 
 PROG_NAME=baseStation
 
-all: $(PROG_NAME)
+
+all:
+	$(TIME) make all-act
+
+update:
+	$(TIME) make update-act
+
+
+all-act: $(PROG_NAME)
+
+update-act: get $(PROG_NAME)
+
+get:
+	./getcoppermind.sh
+
 
 # Compile Flags
 CFLAGS=-Wall
@@ -21,11 +36,11 @@ INCLUDES = -I$(IDIR) -I$(LIB_INC) -L$(LIB) -lrf24 -lwiringPi
 
 
 # Dependency files
-_DEPS = main.h radio.h eprom.h
+_DEPS = main.h radio.h eprom.h weather.h
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 
 # object files
-_OBJ = main.o radio.o eprom.o
+_OBJ = main.o radio.o eprom.o weather.o
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 
 
@@ -42,3 +57,4 @@ $(PROG_NAME): $(OBJ)
 .PHONY: clean
 clean:
 	rm -f $(ODIR)/*.o *~ core $(INCDIR)/*~
+	ccache -C

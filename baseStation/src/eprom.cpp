@@ -14,6 +14,8 @@ using std::endl;
 
 uint32_t eeprom::refreshTime = 30000;
 uint32_t eeprom::listenTime = 2000;
+float eeprom::windConversion = 1.0;
+unsigned int eeprom::dailyRain = 0;
 
 #define value(x) getName(x), x
 
@@ -53,6 +55,10 @@ void eeprom::loadEEPROM() {
             continue;
         if(get_value(in, line, value(listenTime)))
             continue;
+        if(get_value(in, line, value(windConversion)))
+            continue;
+        if(get_value(in, line, value(dailyRain)))
+            continue;
         
     }
 
@@ -72,6 +78,8 @@ void eeprom::setEEPROM() {
 
     set_value(out, value(refreshTime));
     set_value(out, value(listenTime));
+    set_value(out, value(windConversion));
+    set_value(out, value(dailyRain));
 
     cout << date() << "< EEPROM Set" << endl;
 }

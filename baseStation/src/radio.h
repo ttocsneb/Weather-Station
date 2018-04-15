@@ -26,23 +26,26 @@
 #define PRESSURE_LOC 17
 
 
+
 namespace radio {
+
+
     void begin();
 
-    void update();
+    bool update();
 
         
-    float getWindSpeed();
-    uint16_t getWindDirection();
-    float getMaxWindSpeed();
-    uint16_t getMaxWindDirection();
-    float getAverageWindSpeed();
-    uint16_t getAverageWindDirection();
+    extern uint16_t rawWindSpeed;
+    extern uint16_t rawWindDirection;
+    extern uint16_t rawMaxWindSpeed;
+    extern uint16_t rawMaxWindDirection;
+    extern uint16_t rawAverageWindSpeed;
+    extern uint16_t rawAverageWindDirection;
 
-    float getHumidity();
-    float getTemperature();
-    float getRainFall();
-    float getPressure();
+    extern uint16_t rawHumidity;
+    extern int16_t rawTemperature;
+    extern uint8_t rawRainFall;
+    extern uint16_t rawPressure;
 }
 
 #endif

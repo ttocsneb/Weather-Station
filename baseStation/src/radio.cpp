@@ -19,6 +19,18 @@ RF24 rad(CE_PIN, CS_PIN);
 
 bool active;
 
+uint16_t radio::rawWindSpeed;
+uint16_t radio::rawWindDirection;
+uint16_t radio::rawMaxWindSpeed;
+uint16_t radio::rawMaxWindDirection;
+uint16_t radio::rawAverageWindSpeed;
+uint16_t radio::rawAverageWindDirection;
+
+uint16_t radio::rawHumidity;
+int16_t radio::rawTemperature;
+uint8_t radio::rawRainFall;
+uint16_t radio::rawPressure;
+
 void radio::begin() {
     global::light(true);
     cout << date() << "> Begin Radio" << endl;
@@ -42,15 +54,35 @@ void radio::begin() {
 }
 
 bool checkForPacket() {
+    cout << date() << "Checking for Packet" << endl;
     if(active) {
-        //TODO check for available packets
+        if(rad.available()) {
+            cout << date() << "Packet received" << endl;
+            uint8_t data[PACKET_SIZE];
+
+            rad.read(data, PACKET_SIZE);
+
+            radio::rawWindSpeed = global::get16(data + WIND_SPEED_LOC);
+            radio::rawWindDirection = global::get16(data + WIND_DIREC_LOC);
+            radio::rawAverageWindSpeed = global::get16(data + WIND_AVG_SPEED_LOC);
+            radio::rawAverageWindDirection = global::get16(data + WIND_AVG_DIREC_LOC);
+            radio::rawMaxWindSpeed = global::get16(data + WIND_MAX_SPEED_LOC);
+            radio::rawMaxWindDirection = global::get16(data + WIND_MAX_DIREC_LOC);
+
+            radio::rawHumidity = global::get16(data + HUMIDITY_LOC);
+            radio::rawTemperature = global::get16(data + TEMPERATURE_LOC);
+            radio::rawRainFall = global::get8(data + RAIN_LOC);
+            radio::rawPressure = global::get16(data + PRESSURE_LOC);
+
+            return true;
+        }
     }
 
     return false;
 }
 
-void radio::update() {
-    static unsigned int lost_packets(0);
+bool radio::update() {
+    static unsigned int lost_packets(100);
     bool successfull = false;
 
     global::light(true);
@@ -59,9 +91,10 @@ void radio::update() {
 
     active = true;
     rad.powerUp();
+    rad.startListening();
 
     //check if the timer is out of sync with the station
-    if(lost_packets > 2) {
+    if(lost_packets > 1) {
         cout << date() << "Too many lost packets, possible sync error.  Resyncing" << endl;
 
         lost_packets = 0;
@@ -69,7 +102,7 @@ void radio::update() {
         //wait for up to eeprom::refreshTime (30s) for an incomming packet
         time_point t =  Clock::now();
         while(!successfull && timeDiff(t,  Clock::now()) < eeprom::refreshTime) {
-            sleep_for(1s);
+            sleep_for(500ms);
             global::toggleLight();
             successfull = checkForPacket();
         }
@@ -77,6 +110,7 @@ void radio::update() {
 
 
         active = false;
+        rad.stopListening();
         rad.powerDown();
 
         //if a packet was received, wait until the next update time.
@@ -84,13 +118,13 @@ void radio::update() {
             cout << date() << "Packet received, waiting " << (eeprom::refreshTime - eeprom::listenTime / 2) / 1000.0 << " seconds to sync with the station" << endl;
             sleep_for(std::chrono::milliseconds(eeprom::refreshTime - eeprom::listenTime / 2));
         }
+        return false;
     } else {
 
         //wait for an available packet
         time_point t = Clock::now();
         while(!successfull && timeDiff(t,  Clock::now()) < eeprom::listenTime) {
             sleep_for(500ms);
-            global::toggleLight();
             successfull = checkForPacket();
         }
         global::light(true);
@@ -104,10 +138,11 @@ void radio::update() {
 
     cout << date() << "< " << (successfull ? "Transmission Received" : "No Transmission available") << endl;
 
-    if(active) {
-        rad.powerDown();
-        active = false;
-    }
+    rad.stopListening();
+    rad.powerDown();
+    active = false;
 
     global::light(false);
+
+    return successfull;
 }
