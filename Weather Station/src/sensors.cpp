@@ -45,7 +45,7 @@ void sensors::begin() {
 
 }
 
-int8_t sensors::getRainFall() {
+uint8_t sensors::getRainFall() {
     return rain;
 }
 

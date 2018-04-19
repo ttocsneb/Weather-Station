@@ -53,7 +53,7 @@ uint16_t getAverageWindDirection();
 
 uint16_t getHumidity();
 int16_t getTemperature();
-int8_t getRainFall();
+uint8_t getRainFall();
 uint16_t getPressure();
 
 
