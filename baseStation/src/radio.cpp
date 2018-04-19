@@ -3,11 +3,23 @@
 #include "eprom.h"
 
 #include <iostream>
+#include <queue>
 #include <algorithm>
 #include <RF24/RF24.h>
 
 using std::cout;
 using std::endl;
+
+struct Command {
+    //pointer to command array
+    uint8_t* command;
+    //size of command array
+    uint8_t size;
+    //expects a reply for the command
+    bool expectReply;
+};
+
+std::queue<Command> commands;
 
 const uint8_t STATION_ADDRESS[6] = "WTRst";
 const uint8_t BASE_ADDRESS[6] = "WTRbs";
@@ -145,4 +157,61 @@ bool radio::update() {
     global::light(false);
 
     return successfull;
+}
+
+#define WIND_TICK_SIZE 1
+#define WIND_READ_TIME_SIZE 2
+
+#define WIND_AVG_UPDATE_TIME_SIZE 2
+#define WIND_AVG_STORAGE_TIME_SIZE 4
+
+#define PRES_ALTITUDE_SIZE 2
+
+#define REFRESH_TIME_SIZE 4
+
+#define RESETS_SIZE 1
+
+void initCommand(uint8_t size, Command &c) {
+    c.size = size + 2;
+    c.command = new uint8_t[c.size];
+    commands.push(c);
+}
+
+template<typename T>
+void radio::setEEPROM(EEPROM_Variable var, T value) {
+//populate the command array
+#define SET(size) c.command[0] = COMMAND_SET_VALUE; \
+                  c.command[1] = var; \
+                  (size == 1 ? global::set8(c.command + 2, value) : \
+                  (size == 2 ? global::set16(c.command + 2, value) : \
+                  global::set32(c.command + 2, value)))
+    Command c;
+    c.expectReply = false;
+
+    switch(var) {
+    case WIND_TICK:
+        initCommand(WIND_TICK_SIZE, c);
+        SET(WIND_TICK_SIZE);
+        return;
+    case WIND_READ_TIME:
+        initCommand(WIND_READ_TIME_SIZE, c);
+        SET(WIND_READ_TIME_SIZE);
+        return;
+    case WIND_AVG_UPDATE_TIME:
+        initCommand(WIND_AVG_UPDATE_TIME_SIZE, c);
+        SET(WIND_AVG_UPDATE_TIME_SIZE);
+        return;
+    case WIND_AVG_STORAGE_TIME:
+        initCommand(WIND_AVG_STORAGE_TIME_SIZE, c);
+        SET(WIND_AVG_STORAGE_TIME_SIZE);
+        return;
+    case PRES_ALTITUDE:
+        initCommand(PRES_ALTITUDE_SIZE, c);
+        SET(PRES_ALTITUDE_SIZE);
+        return;
+    case REFRESH_TIME:
+        initCommand(REFRESH_TIME_SIZE, c);
+        SET(REFRESH_TIME_SIZE);
+        return;
+    }
 }

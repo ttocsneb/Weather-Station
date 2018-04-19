@@ -5,7 +5,6 @@
 #include <math.h>
 
 #include <iostream>
-#include <queue>
 #include <deque>
 
 using std::cout;

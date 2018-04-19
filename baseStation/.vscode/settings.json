@@ -38,6 +38,8 @@
         "algorithm": "cpp",
         "xmemory": "cpp",
         "queue": "cpp",
-        "chrono": "cpp"
+        "chrono": "cpp",
+        "xfunctional": "cpp",
+        "xlocmon": "cpp"
     }
 }
