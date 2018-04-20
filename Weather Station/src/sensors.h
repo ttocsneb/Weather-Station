@@ -1,15 +1,16 @@
 #ifndef __SENSORS__
 #define __SENSORS__
 
-#include "main.h"
-
 #include <Adafruit_Sensor.h>
 #include <DHT.h>
+#include <FaBoBarometer_MPL115.h>
+#include <Wire.h>
+
+#include "main.h"
+
 #define DHTTYPE DHT22
 #define DHTPIN 5
 
-#include <FaBoBarometer_MPL115.h>
-#include <Wire.h>
 
 #define WIND_SPEED_LOC 0
 #define WIND_DIREC_LOC 2

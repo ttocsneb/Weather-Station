@@ -7,3 +7,12 @@
 [submodule "baseStation/lib/wiringPi"]
 	path = baseStation/lib/wiringPi
 	url = git://git.drogon.net/wiringPi
+[submodule ".\\Weather Station\\lib\\RF24"]
+	path = .\\Weather Station\\lib\\RF24
+	url = https://github.com/nRF24/RF24.git
+[submodule "Weather Station/lib/DHT-sensor-library"]
+	path = Weather Station/lib/DHT-sensor-library
+	url = https://github.com/adafruit/DHT-sensor-library.git
+[submodule "Weather Station/lib/FaBoBarometer-MPL115-Library"]
+	path = Weather Station/lib/FaBoBarometer-MPL115-Library
+	url = https://github.com/FaBoPlatform/FaBoBarometer-MPL115-Library.git

@@ -1,6 +1,6 @@
-#include "main.h"
 #include "sensors.h"
 #include "radio.h"
+#include "main.h"
 
 #include "eprom.h"
 
