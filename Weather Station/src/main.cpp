@@ -10,6 +10,8 @@ void setupInputs() {
     pinMode(WIND, INPUT_PULLUP);
     pinMode(RAIN, INPUT_PULLUP);
 
+    pinMode(BATTPIN, INPUT);
+
     pinMode(SOLARVOLTAGEPIN, INPUT);
     pinMode(SOLARENABLEPIN, OUTPUT);
 
@@ -89,6 +91,14 @@ void loop() {
     delay(1);
 }
 
+void main::setB(uint8_t* index, uint8_t location, bool val) {
+    if(val) {
+        *index = *index | (1 << location);
+    } else {
+        *index = *index & ~(1 << location);
+    }
+}
+
 void main::set8(uint8_t* index, uint8_t val) {
     *index = val;
 }
@@ -101,6 +111,10 @@ void main::set16(uint8_t* index, uint16_t val) {
 void main::set32(uint8_t* index, uint32_t val) {
     set16(index, (val >> 16) & 0xFFFF);
     set16(index + 2, val & 0xFFFF);
+}
+
+bool main::getB(uint8_t* index, uint8_t location) {
+    return (*index >> location) & 1;
 }
 
 uint8_t main::get8(uint8_t* index) {
@@ -117,4 +131,30 @@ uint32_t main::get32(uint8_t* index) {
 
 float main::getSolarVoltage() {
     return (analogRead(SOLARVOLTAGEPIN) / 1024.0) * 3.3 * 3.1304;
+}
+
+float main::getBatteryVoltage() {
+    return (analogRead(BATTPIN) / 512.0) * 3.3;
+}
+
+#define LOSTPACKETS_LOC 0
+#define CHARGING_TIME_LOC 2
+#define IS_CHARGING_LOC 4
+#define IS_CHARGING_LOCBIN 0
+#define BATTERY_LOC 5
+#define RESETS_LOC 6
+
+//location of last item plus its size
+#define STATUS_SIZE RESETS_LOC + 1
+
+void main::loadStatus(uint8_t* data) {
+    set16(data + LOSTPACKETS_LOC, radio::lostPackets);
+    //TODO: set CHARGING_TIME
+    setB(data + IS_CHARGING_LOC, IS_CHARGING_LOCBIN, isCharging);
+    set8(data + BATTERY_LOC, static_cast<uint8_t>(getBatteryVoltage()*50));
+    set8(data + RESETS_LOC, eeprom::resets);
+}
+
+uint8_t main::getStatusSize() {
+    return STATUS_SIZE;
 }

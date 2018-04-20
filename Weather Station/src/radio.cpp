@@ -1,6 +1,6 @@
+#include "sensors.h"
 #include "radio.h"
 #include "eprom.h"
-#include "sensors.h"
 
 #include "queue.h"
 
@@ -196,6 +196,13 @@ void radio::update() {
                     } else if(data[i] == COMMAND_GET_VALUE) {
                         getValue(data + i);
                         i++;
+                    } else if(data[i] == COMMAND_GET_STATUS) {
+                        Command c;
+                        c.size = main::getStatusSize() + 1;
+                        c.command = new uint8_t[c.size];
+                        c.command[0] = COMMAND_GET_STATUS;
+                        main::loadStatus(c.command + 1);
+                        commands.push(c);
                     } else if(data[i] == COMMAND_RESET) {
                         //TODO reset
                     }

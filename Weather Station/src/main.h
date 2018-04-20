@@ -21,21 +21,24 @@
 
 namespace main {
 
-void set8(uint8_t* index, uint8_t val);
+    void setB(uint8_t* index, uint8_t location, bool val);
+    void set8(uint8_t* index, uint8_t val);
+    void set16(uint8_t* index, uint16_t val);
+    void set32(uint8_t* index, uint32_t val);
 
-void set16(uint8_t* index, uint16_t val);
+    bool getB(uint8_t* index, uint8_t location);
+    uint8_t get8(uint8_t* index);
+    uint16_t get16(uint8_t* index);
+    uint32_t get32(uint8_t* index);
 
-void set32(uint8_t* index, uint32_t val);
+    float getSolarVoltage();
 
-uint8_t get8(uint8_t* index);
+    float getBatteryVoltage();
 
-uint16_t get16(uint8_t* index);
+    extern bool isCharging;
 
-uint32_t get32(uint8_t* index);
-
-float getSolarVoltage();
-
-extern bool isCharging;
+    void loadStatus(uint8_t* data);
+    uint8_t getStatusSize();
 
 }
 

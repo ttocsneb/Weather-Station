@@ -43,6 +43,12 @@ int16_t radio::rawTemperature;
 uint8_t radio::rawRainFall;
 uint16_t radio::rawPressure;
 
+uint16_t radio::status::lostPackets;
+uint16_t radio::status::chargingTime;
+bool radio::status::isCharging;
+float radio::status::batteryVoltage;
+uint8_t radio::status::numResets;
+
 void radio::begin() {
     global::light(true);
     cout << date() << "> Begin Radio" << endl;
@@ -130,6 +136,7 @@ bool sendPackets() {
 }
 
 uint8_t getValue(uint8_t* data);
+uint8_t setStatus(uint8_t* data);
 
 void sendCommands() {
     rad.stopListening();
@@ -145,6 +152,9 @@ void sendCommands() {
             while(data[i] != EOT && i < PACKET_SIZE) {
                 if(data[i] == COMMAND_GET_VALUE) {
                     i += getValue(data + i + 1);
+                    i++;
+                } else if(data[i] == COMMAND_GET_VALUE) {
+                    i += setStatus(data + i + 1);
                     i++;
                 }
                 i++;
@@ -220,6 +230,41 @@ bool radio::update() {
     return successfull;
 }
 
+
+#define LOSTPACKETS_LOC 0
+#define CHARGING_TIME_LOC 2
+#define IS_CHARGING_LOC 4
+#define IS_CHARGING_LOCBIN 0
+#define BATTERY_LOC 5
+#define RESETS_LOC 6
+
+//location of last item plus its size
+#define STATUS_SIZE RESETS_LOC + 1
+
+radio::Status_got successStatus;
+
+uint8_t setStatus(uint8_t* data) {
+    radio::status::lostPackets = global::get16(data + LOSTPACKETS_LOC);
+    radio::status::chargingTime = 0;//TODO: implement
+    radio::status::isCharging = global::getB(data + IS_CHARGING_LOC, IS_CHARGING_LOCBIN);
+    radio::status::batteryVoltage = global::get8(data + BATTERY_LOC) / 50.0;
+    radio::status::numResets = global::get8(data + RESETS_LOC);
+    if(successStatus) {
+        (*successStatus)();
+    }
+    return STATUS_SIZE;
+}
+
+void radio::getStatus(radio::Status_got success) {
+    Command c;
+    c.size = 1;
+    c.command = new uint8_t[c.size];
+    c.command[0] = COMMAND_GET_STATUS;
+    c.expectReply = true;
+    commands.push(c);
+    successStatus = success;
+}
+
 #define WIND_TICK_SIZE 1
 #define WIND_READ_TIME_SIZE 2
 
@@ -232,34 +277,57 @@ bool radio::update() {
 
 #define RESETS_SIZE 1
 
+std::queue<radio::EEPROM_got> getSuccess;
+
 uint8_t getValue(uint8_t* data) {
     #define GET(size) (size == 1 ? global::get8(data + 1) : \
                             (size == 2 ? global::get16(data + 1) : \
                             global::get32(data + 1)))
+    #define GET_NOTIFY(type) if(getSuccess.front())(*getSuccess.front())(type); \
+                             getSuccess.pop()
 
     switch(*data) {
     case WIND_TICK:
         eeprom::station::wind::ticks = GET(WIND_TICK_SIZE);
+        GET_NOTIFY(WIND_TICK);
         return WIND_TICK_SIZE;
     case WIND_READ_TIME:
         eeprom::station::wind::readTime = GET(WIND_READ_TIME_SIZE);
+        GET_NOTIFY(WIND_READ_TIME);
         return WIND_READ_TIME_SIZE;
     case WIND_AVG_UPDATE_TIME:
         eeprom::station::wind::averageUpdateTime = GET(WIND_AVG_UPDATE_TIME_SIZE);
+        GET_NOTIFY(WIND_AVG_UPDATE_TIME);
         return WIND_AVG_UPDATE_TIME_SIZE;
     case WIND_AVG_STORAGE_TIME:
-        eeprom::station::wind::averageUpdateTime = GET(WIND_AVG_STORAGE_TIME_SIZE);
+        eeprom::station::wind::averageStorageTime = GET(WIND_AVG_STORAGE_TIME_SIZE);
+        GET_NOTIFY(WIND_AVG_STORAGE_TIME);
         return WIND_AVG_STORAGE_TIME_SIZE;
     case PRES_ALTITUDE:
         eeprom::station::pressure::altitude = GET(PRES_ALTITUDE_SIZE);
+        GET_NOTIFY(PRES_ALTITUDE);
         return PRES_ALTITUDE_SIZE;
     case REFRESH_TIME:
         eeprom::refreshTime = GET(REFRESH_TIME_SIZE);
+        GET_NOTIFY(REFRESH_TIME);
         return REFRESH_TIME_SIZE;
     }
     return 0;
     
 }
+
+void radio::getEEPROM(EEPROM_Variable variable, radio::EEPROM_got success) {
+    Command c;
+    c.size = 2;
+    c.command = new uint8_t[c.size];
+    c.expectReply = true;
+
+    c.command[0] = COMMAND_GET_VALUE;
+    c.command[1] = variable;
+    commands.push(c);
+    getSuccess.push(success);
+}
+
 
 void initCommand(uint8_t size, Command &c) {
     c.size = size + 2;
