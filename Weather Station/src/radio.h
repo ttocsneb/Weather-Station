@@ -12,6 +12,7 @@
 
 #define COMMAND_SET_VALUE 'S'
 #define COMMAND_SET_EEPROM 'E'
+#define COMMAND_GET_VALUE 'G'
 #define COMMAND_LOAD_EEPROM 'L'
 #define COMMAND_RESET 'R'
 

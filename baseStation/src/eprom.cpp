@@ -17,6 +17,13 @@ uint32_t eeprom::listenTime = 2000;
 float eeprom::windConversion = 1.0;
 unsigned int eeprom::dailyRain = 0;
 
+uint8_t eeprom::station::wind::ticks = 0;
+uint16_t eeprom::station::wind::readTime = 0;
+uint16_t eeprom::station::wind::averageUpdateTime = 0;
+uint32_t eeprom::station::wind::averageStorageTime = 0;
+
+uint16_t eeprom::station::pressure::altitude = 0;
+
 #define value(x) getName(x), x
 
 template<typename T>

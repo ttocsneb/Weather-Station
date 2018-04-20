@@ -93,6 +93,66 @@ bool checkForPacket() {
     return false;
 }
 
+/**
+ * Send the commands stored in commands
+ * 
+ * @returns true if a response is expected
+ */
+bool sendPackets() {
+    uint8_t packets[PACKET_SIZE];
+    //send all of the commands in the queue
+    bool expectResponse = false;
+    while(!commands.empty()) {
+        uint8_t i = 0;
+        //stack the commands in the packet as much as it can hold
+        Command com = commands.front();
+        while(!commands.empty() && i + com.size < PACKET_SIZE) {
+            com = commands.front();
+            uint8_t ind = com.size;
+            while(ind--) {
+                packets[i + ind] = com.command[ind];
+            }
+            if(com.expectReply) {
+                expectResponse = true;
+            }
+            i += com.size;
+            delete[] com.command;
+            commands.pop();
+        }
+        packets[i] = EOT;
+        //if the packet fails, don't send anymore
+        if(!rad.write(packets, PACKET_SIZE)) {
+            return expectResponse;
+        }
+    }
+
+    return expectResponse;
+}
+
+uint8_t getValue(uint8_t* data);
+
+void sendCommands() {
+    rad.stopListening();
+    if(sendPackets()) {
+        rad.startListening();
+        sleep_for(500ms);
+        while(rad.available()) {
+            uint8_t data[PACKET_SIZE];
+
+            rad.read(data, PACKET_SIZE);
+
+            uint8_t i = 0;
+            while(data[i] != EOT && i < PACKET_SIZE) {
+                if(data[i] == COMMAND_GET_VALUE) {
+                    i += getValue(data + i + 1);
+                    i++;
+                }
+                i++;
+            }
+        }
+    }
+}
+
 bool radio::update() {
     static unsigned int lost_packets(100);
     bool successfull = false;
@@ -139,10 +199,11 @@ bool radio::update() {
             sleep_for(500ms);
             successfull = checkForPacket();
         }
-        global::light(true);
 
+        //if successful, try to send the commands
         if(successfull) {
             lost_packets = std::min(lost_packets - 1, (unsigned int)(0));
+            sendCommands();
         } else {
             lost_packets++;
         }
@@ -170,6 +231,35 @@ bool radio::update() {
 #define REFRESH_TIME_SIZE 4
 
 #define RESETS_SIZE 1
+
+uint8_t getValue(uint8_t* data) {
+    #define GET(size) (size == 1 ? global::get8(data + 1) : \
+                            (size == 2 ? global::get16(data + 1) : \
+                            global::get32(data + 1)))
+
+    switch(*data) {
+    case WIND_TICK:
+        eeprom::station::wind::ticks = GET(WIND_TICK_SIZE);
+        return WIND_TICK_SIZE;
+    case WIND_READ_TIME:
+        eeprom::station::wind::readTime = GET(WIND_READ_TIME_SIZE);
+        return WIND_READ_TIME_SIZE;
+    case WIND_AVG_UPDATE_TIME:
+        eeprom::station::wind::averageUpdateTime = GET(WIND_AVG_UPDATE_TIME_SIZE);
+        return WIND_AVG_UPDATE_TIME_SIZE;
+    case WIND_AVG_STORAGE_TIME:
+        eeprom::station::wind::averageUpdateTime = GET(WIND_AVG_STORAGE_TIME_SIZE);
+        return WIND_AVG_STORAGE_TIME_SIZE;
+    case PRES_ALTITUDE:
+        eeprom::station::pressure::altitude = GET(PRES_ALTITUDE_SIZE);
+        return PRES_ALTITUDE_SIZE;
+    case REFRESH_TIME:
+        eeprom::refreshTime = GET(REFRESH_TIME_SIZE);
+        return REFRESH_TIME_SIZE;
+    }
+    return 0;
+    
+}
 
 void initCommand(uint8_t size, Command &c) {
     c.size = size + 2;
