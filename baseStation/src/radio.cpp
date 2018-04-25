@@ -113,6 +113,9 @@ bool sendPackets() {
         //stack the commands in the packet as much as it can hold
         Command com = commands.front();
         while(!commands.empty() && i + com.size < PACKET_SIZE) {
+            
+            cout << date() << "Sending command: " << *com.command << endl;
+
             com = commands.front();
             uint8_t ind = com.size;
             while(ind--) {
@@ -141,8 +144,12 @@ uint8_t setStatus(uint8_t* data);
 void sendCommands() {
     rad.stopListening();
     if(sendPackets()) {
+        cout << date() << "Expecting Reply" << endl;
         rad.startListening();
         sleep_for(500ms);
+        if(!rad.available()) {
+            cout << date() << "Reply didn't come" << endl;
+        }
         while(rad.available()) {
             uint8_t data[PACKET_SIZE];
 
@@ -153,7 +160,7 @@ void sendCommands() {
                 if(data[i] == COMMAND_GET_VALUE) {
                     i += getValue(data + i + 1);
                     i++;
-                } else if(data[i] == COMMAND_GET_VALUE) {
+                } else if(data[i] == COMMAND_GET_STATUS) {
                     i += setStatus(data + i + 1);
                     i++;
                 }
@@ -241,7 +248,7 @@ bool radio::update() {
 //location of last item plus its size
 #define STATUS_SIZE RESETS_LOC + 1
 
-radio::Status_got successStatus;
+radio::Status_got successStatus = NULL;
 
 uint8_t setStatus(uint8_t* data) {
     radio::status::lostPackets = global::get16(data + LOSTPACKETS_LOC);
