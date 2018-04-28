@@ -7,6 +7,7 @@
 #include "radio.h"
 #include "eprom.h"
 #include "weather.h"
+#include "commands.h"
 
 
 using std::cout;
@@ -14,32 +15,32 @@ using std::endl;
 
 void gotEEProm(EEPROM_Variable var) {
     switch(var) {
-    case WIND_TICK:
-        cout << date() << "Got Wind Tick: " << eeprom::station::wind::ticks << endl;
+    case ALIAS_WIND_TICK:
+        cout << date() << "Got Wind Tick: " << commands::station::wind::ticks << endl;
         return;
-    case WIND_READ_TIME:
-        cout << date() << "Got Wind Readtime: " << eeprom::station::wind::readTime << endl;
+    case ALIAS_WIND_READ_TIME:
+        cout << date() << "Got Wind Readtime: " << commands::station::wind::readTime << endl;
         return;
-    case WIND_AVG_UPDATE_TIME:
-        cout << date() << "Got Wind average Updatetime: " << eeprom::station::wind::averageUpdateTime << endl;
+    case ALIAS_WIND_AVG_UPDATE_TIME:
+        cout << date() << "Got Wind average Updatetime: " << commands::station::wind::averageUpdateTime << endl;
         return;
-    case WIND_AVG_STORAGE_TIME:
-        cout << date() << "Got Wind average Storagetime: " << eeprom::station::wind::averageStorageTime << endl;
+    case ALIAS_WIND_AVG_STORAGE_TIME:
+        cout << date() << "Got Wind average Storagetime: " << commands::station::wind::averageStorageTime << endl;
         return;
-    case PRES_ALTITUDE:
-        cout << date() << "Got Pressure Altitude: " << eeprom::station::pressure::altitude << endl;
+    case ALIAS_PRES_ALTITUDE:
+        cout << date() << "Got Pressure Altitude: " << commands::station::pressure::altitude << endl;
         return;
-    case REFRESH_TIME:
-        cout << date() << "Got Refresh Time: " << eeprom::refreshTime << endl;
+    case ALIAS_REFRESH_TIME:
+        cout << date() << "Got Refresh Time: " << commands::station::refreshTime << endl;
     }
 }
 
 void gotStatus() {
     cout << date() << "Got Status: " << endl;
-    cout << "Battery: " << radio::status::batteryVoltage << endl;
-    cout << "Charging: " << (radio::status::isCharging ? "Yes" : "No") << endl;
-    cout << "Lost Packets: " << radio::status::lostPackets << endl;
-    cout << "Resets: " << radio::status::numResets << endl;
+    cout << "Battery: " << commands::status::batteryVoltage << endl;
+    cout << "Charging: " << (commands::status::isCharging ? "Yes" : "No") << endl;
+    cout << "Lost Packets: " << commands::status::lostPackets << endl;
+    cout << "Resets: " << commands::status::numResets << endl;
 }
 
 int main(int argc, char** argv) {
@@ -55,12 +56,20 @@ int main(int argc, char** argv) {
     radio::begin();
 
 
+    bool temp = true;
+
     while(true) {
         time_point t = system_clock::now() + 30s;
         if(radio::update()) {
             weather::update();
         }
-        radio::getStatus(&gotStatus);
+        temp = !temp;
+        if(temp) {
+            commands::setEEPROM<PRES_ALTITUDE_TYPE>(ALIAS_PRES_ALTITUDE, 0);
+        } else {
+            commands::getEEPROM(ALIAS_PRES_ALTITUDE, gotEEProm);
+        }
+        
         sleep_until(t);
     }
 
@@ -99,7 +108,7 @@ std::string date() {
 }
 
 
-void global::setB(uint8_t* index, uint8_t location, bool val) {
+void global::setBool(uint8_t* index, uint8_t location, bool val) {
     if(val) {
         *index = *index | (1 << location);
     } else {
@@ -107,32 +116,56 @@ void global::setB(uint8_t* index, uint8_t location, bool val) {
     }
 }
 
-void global::set8(uint8_t* index, uint8_t val) {
+void set8(uint8_t* index, uint8_t val) {
     *index = val;
 }
 
-void global::set16(uint8_t* index, uint16_t val) {
+void set16(uint8_t* index, uint16_t val) {
     set8(index, (val >> 8) & 0xFF);
     set8(index + 1, val & 0xFF);
 }
 
-void global::set32(uint8_t* index, uint32_t val) {
+void set32(uint8_t* index, uint32_t val) {
     set16(index, (val >> 16) & 0xFFFF);
     set16(index + 2, val & 0xFFFF);
 }
 
-bool global::getB(uint8_t* index, uint8_t location) {
+bool global::getBool(const uint8_t* index, uint8_t location) {
     return (*index >> location) & 1;
 }
 
-uint8_t global::get8(uint8_t* index) {
+uint8_t get8(const uint8_t* index) {
     return *index;
 }
 
-uint16_t global::get16(uint8_t* index) {
+uint16_t get16(const uint8_t* index) {
     return (static_cast<uint16_t>(get8(index)) << 8) | get8(index + 1);
 }
 
-uint32_t global::get32(uint8_t* index) {
+uint32_t get32(const uint8_t* index) {
     return (static_cast<uint32_t>(get16(index)) << 16) | get16(index + 2);
+}
+
+namespace global {
+
+    template<> uint8_t get<uint8_t>(const uint8_t* index) {
+        return get8(index);
+    }
+    template<> uint16_t get<uint16_t>(const uint8_t* index) {
+        return get16(index);
+    }
+    template<> uint32_t get<uint32_t>(const uint8_t* index) {
+        return get32(index);
+    }
+
+
+    template<> void set<uint8_t>(uint8_t* index, uint8_t val) {
+        set8(index, val);
+    }
+    template<> void set<uint16_t>(uint8_t* index, uint16_t val) {
+        set16(index, val);
+    }
+    template<> void set<uint32_t>(uint8_t* index, uint32_t val) {
+        set32(index, val);
+    }
 }

@@ -24,16 +24,15 @@ namespace global {
     void light(bool value);
     void toggleLight();
 
+    
 
-    void setB(uint8_t* index, uint8_t location, bool val);
-    void set8(uint8_t* index, uint8_t val);
-    void set16(uint8_t* index, uint16_t val);
-    void set32(uint8_t* index, uint32_t val);
+    void setBool(uint8_t* index, uint8_t location, bool val);
+    bool getBool(const uint8_t* index, uint8_t location);
+    
 
-    bool getB(uint8_t* index, uint8_t location);
-    uint8_t get8(uint8_t* index);
-    uint16_t get16(uint8_t* index);
-    uint32_t get32(uint8_t* index);
+    template <typename T> void set(uint8_t* index, T val);
+    
+    template <typename T> T get(const uint8_t* index);
 }
 
 #endif
