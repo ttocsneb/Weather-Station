@@ -56,18 +56,10 @@ int main(int argc, char** argv) {
     radio::begin();
 
 
-    bool temp = true;
-
     while(true) {
         time_point t = system_clock::now() + 30s;
         if(radio::update()) {
             weather::update();
-        }
-        temp = !temp;
-        if(temp) {
-            commands::setEEPROM<PRES_ALTITUDE_TYPE>(ALIAS_PRES_ALTITUDE, 0);
-        } else {
-            commands::getEEPROM(ALIAS_PRES_ALTITUDE, gotEEProm);
         }
         
         sleep_until(t);

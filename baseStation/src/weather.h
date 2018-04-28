@@ -20,7 +20,16 @@ namespace weather {
     extern float rainHour;
     extern float rainDay;
 
+    /**
+     * Update the Weather data from the raw data given by radio::update()
+     * 
+     * @note radio::update() should be called before this
+     */
     void update();
+
+    /**
+     * Initialize the weather namespace
+     */
     void begin();
 }
 

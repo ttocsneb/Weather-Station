@@ -27,9 +27,16 @@
 
 namespace radio {
 
-
+    /**
+     * Initialize the radio namespace
+     */
     void begin();
 
+    /**
+     * Update the raw weather data with the station.
+     * 
+     * @note should only be called once every 30 seconds
+     */
     bool update();
 
     

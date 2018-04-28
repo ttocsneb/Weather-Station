@@ -12,6 +12,11 @@
 #define PRES_ALTITUDE_TYPE uint16_t
 #define REFRESH_TIME_TYPE uint32_t
 
+/**
+ * EEPROM Variables that can be set
+ * 
+ * The value of each enum is the alias used
+ */
 enum EEPROM_Variable {
     ALIAS_WIND_TICK='t',
     ALIAS_WIND_READ_TIME='r',
@@ -21,6 +26,11 @@ enum EEPROM_Variable {
     ALIAS_REFRESH_TIME='R'
 };
 
+/**
+ * Command Aliases
+ * 
+ * The value of each enum is the byte that is sent
+ */
 enum COMMANDS {
     COMMAND_SET_VALUE='S',
     COMMAND_GET_VALUE='G',
@@ -29,8 +39,6 @@ enum COMMANDS {
     COMMAND_LOAD_EEPROM='L',
     COMMAND_RESET='R'
 };
-
-
 
 
 namespace commands {
