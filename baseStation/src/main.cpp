@@ -2,6 +2,11 @@
 #include <sstream>
 #include <iomanip>
 #include <wiringPi.h>
+#include <fstream>
+#include <cstdio>
+#include <memory>
+#include <stdexcept>
+#include <array>
 
 #include "main.h"
 #include "radio.h"
@@ -46,7 +51,7 @@ void gotStatus() {
 int main(int argc, char** argv) {
     wiringPiSetup();
 
-    pinMode(27, OUTPUT);
+    global::begin();
 
     eeprom::loadEEPROM();
     eeprom::setEEPROM();
@@ -60,7 +65,46 @@ int main(int argc, char** argv) {
         time_point t = system_clock::now() + 30s;
         if(radio::update()) {
             weather::update();
+
+            
+            
+            //upload weather
+
+            //Write weather to file
+            std::ofstream out(".weather");
+            
+            //print the current time in the format required by wunderground
+            time_t tt = system_clock::to_time_t(system_clock::now());
+            struct std::tm * ptm = std::localtime(&tt);
+            out << std::put_time(ptm, "%F+%H%%3A%M%%3A%S") << endl;
+            //write the data with proper precision
+            out << std::fixed;
+            out << std::setprecision(1) << weather::humidity << endl;
+            out << std::setprecision(2) << weather::dewpoint << endl;
+            out << std::setprecision(2) << weather::temperature << endl;
+            out << std::setprecision(2) << weather::rainHour << endl;
+            out << std::setprecision(2) << weather::rainDay << endl;
+            out << std::setprecision(3) << weather::barometer << endl;
+            out << std::setprecision(2) << weather::windSpeed << endl;
+            out << std::setprecision(0) << weather::windDirection << endl;
+            out << std::setprecision(2) << weather::windGust10Min << endl;
+            out << std::setprecision(0) << weather::windGustDirection10Min << endl;
+            out << std::setprecision(2) << weather::averageWindSpeed2Min << endl;
+            out << std::setprecision(0) << weather::averageWindDirection2Min << endl;
+            out.close();
+
+            cout << date() << "Uploading WeatherData:" << endl;
+
+            //upload the data
+            std::string output = global::exec("./upload");
+
+            cout << output << std::flush;
+            cout << date() << "done" << endl;
+
         }
+
+        commands::getStatus(&gotStatus);
+
         
         sleep_until(t);
     }
@@ -72,6 +116,18 @@ int main(int argc, char** argv) {
 
 void global::begin() {
     pinMode(LIGHT_PIN, OUTPUT);
+}
+
+std::string global::exec(const char* cmd) {
+    std::array<char, 128> buffer;
+    std::string result;
+    std::shared_ptr<FILE> pipe(popen(cmd, "r"), pclose);
+    if(!pipe) throw std::runtime_error("popen() failed!");
+    while(!feof(pipe.get())) {
+        if(fgets(buffer.data(), 128, pipe.get()) != nullptr)
+            result += buffer.data();
+    }
+    return result;
 }
 
 bool lightValue = false;

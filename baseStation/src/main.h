@@ -25,6 +25,15 @@ namespace global {
     void begin();
 
     /**
+     * execute a shell command
+     * 
+     * @param cmd command
+     * 
+     * @return output
+     */
+    std::string exec(const char* cmd);
+
+    /**
      * Turn on or off the indicator light
      * 
      * @param value 
