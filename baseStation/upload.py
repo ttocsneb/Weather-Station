@@ -23,8 +23,8 @@ f.close()
 
 # create a string to hold the first part of the URL
 WUurl = "https://weatherstation.wunderground.com/weatherstation/updateweatherstation.php?"
-WU_station_id = "XXXX" # Replace XXXX with your PWS ID
-WU_station_pwd = "YYYY" # Replace YYYY with your Password
+WU_station_id = "KUTPROVO29" # Replace XXXX with your PWS ID
+WU_station_pwd = "5mfy6wkx" # Replace YYYY with your Password
 WUcreds = "ID=" + WU_station_id + "&PASSWORD="+ WU_station_pwd
 date_str = "&dateutc=" + date
 action_str = "&action=updateraw"
@@ -46,8 +46,8 @@ request = (WUurl +
     "&winddir_avg2m=" + wind_average_dir +
     action_str)
 
-#print("Test request: " + request)
+print("Test request: " + request)
 
-r = requests.get(request)
+#r = requests.get(request)
 
-print("Received " + str(r.status_code) + " " + str(r.text))
+#print("Received " + str(r.status_code) + " " + str(r.text).rstrip())

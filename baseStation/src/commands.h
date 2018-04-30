@@ -12,6 +12,8 @@
 #define PRES_ALTITUDE_TYPE uint16_t
 #define REFRESH_TIME_TYPE uint32_t
 
+
+
 /**
  * EEPROM Variables that can be set
  * 
@@ -137,6 +139,11 @@ namespace commands {
      * @param size size of packet
      */
     void getReply(const uint8_t* packet, uint8_t size);
+
+    /**
+     * Parse the commands file .commands and execute them
+     */
+    void parseCommandsFile();
 }
 
 #endif

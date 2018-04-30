@@ -3,4 +3,5 @@ bin/*
 baseStation
 .eeprom
 .weather
+.commands
 __*

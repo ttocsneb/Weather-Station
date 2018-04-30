@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <queue>
+#include <fstream>
 
 using std::cout;
 using std::endl;
@@ -227,4 +228,112 @@ void commands::getReply(const uint8_t* packet, uint8_t size) {
         }
         i++;
     }
+}
+
+//==================== Commands Parser ====================
+
+/**
+ * Check if the command is a SetEEPROM Command
+ * 
+ * If it is, send it.
+ * 
+ * @param is in stream
+ * @param command command
+ * 
+ * @return true if it was a SetEEPROM command
+ */
+bool checkCommandSet(std::istream& is, char command) {
+
+    if(command == COMMAND_SET_VALUE) {
+        #define GET(x) (x == ALIAS_WIND_TICK ? WIND_TICK_SIZE : \
+            (x == ALIAS_WIND_READ_TIME ? WIND_READ_TIME_SIZE : \
+            (x == ALIAS_WIND_AVG_UPDATE_TIME ? WIND_AVG_UPDATE_TIME_SIZE : \
+            (x == ALIAS_WIND_AVG_STORAGE_TIME ? WIND_AVG_STORAGE_TIME_SIZE : \
+            (x == ALIAS_PRES_ALTITUDE ? PRES_ALTITUDE_SIZE : \
+            (x == ALIAS_REFRESH_TIME ? REFRESH_TIME_SIZE : 0))))))
+        
+        //Read the command
+        char variable;
+        int value;
+        is >> variable;
+        is >> value;
+
+        cout << "Sending Command: SetEEPROM " << variable << " -> " << value << endl;
+
+        //send the command
+        switch(GET(variable)) {
+        case 1: 
+            commands::setEEPROM<uint8_t>(static_cast<EEPROM_Variable>(variable),
+                static_cast<uint8_t>(value));
+            break;
+        case 2:
+            commands::setEEPROM<uint16_t>(static_cast<EEPROM_Variable>(variable),
+                static_cast<uint16_t>(value));
+            break;
+        case 4:
+            commands::setEEPROM<uint32_t>(static_cast<EEPROM_Variable>(variable),
+                static_cast<uint32_t>(value));
+            break;
+        }
+
+        return true;
+        #undef GET
+    }
+
+    return false;
+}
+
+bool checkSaveEeprom(std::istream& is, char command) {
+
+    if(command == COMMAND_SET_EEPROM) {
+        commands::saveEEPROM();
+
+        cout << "Sending Command: SaveEEPROM" << endl;
+
+        return true;
+    }
+
+    return false;
+}
+
+bool checkLoadEeprom(std::istream& is, char command) {
+
+    if(command == COMMAND_LOAD_EEPROM) {
+        commands::loadEEPROM();
+
+        cout << "Sending Command: LoadEEPROM" << endl;
+
+        return true;
+    }
+
+    return false;
+}
+
+void commands::parseCommandsFile() {
+
+    std::ifstream in(".commands");
+
+    if(!in.is_open() || in.peek() == std::ifstream::traits_type::eof()) {
+        return;
+    }
+
+    cout << date() << "Parsing Commands file" << endl;
+
+    char command;
+
+
+    while(in >> command) {
+
+        if(checkCommandSet(in, command))
+            continue;
+        if(checkSaveEeprom(in, command))
+            continue;
+        if(checkLoadEeprom(in, command))
+            continue;
+        //TODO: add more commands as needed
+    }
+
+    in.close();
+    //clear the commands file
+    std::ofstream out(".commands");
 }

@@ -48,6 +48,42 @@ void gotStatus() {
     cout << "Resets: " << commands::status::numResets << endl;
 }
 
+/**
+ * upload the weather data to wunderground
+ */
+void uploadWeather() {
+    //Write weather to file
+    std::ofstream out(".weather");
+    
+    //print the current time in the format required by wunderground
+    time_t tt = system_clock::to_time_t(system_clock::now());
+    struct std::tm * ptm = std::localtime(&tt);
+    out << std::put_time(ptm, "%F+%H%%3A%M%%3A%S") << endl;
+    //write the data with proper precision
+    out << std::fixed;
+    out << std::setprecision(1) << weather::humidity << endl;
+    out << std::setprecision(2) << weather::dewpoint << endl;
+    out << std::setprecision(2) << weather::temperature << endl;
+    out << std::setprecision(2) << weather::rainHour << endl;
+    out << std::setprecision(2) << weather::rainDay << endl;
+    out << std::setprecision(3) << weather::barometer << endl;
+    out << std::setprecision(2) << weather::windSpeed << endl;
+    out << std::setprecision(0) << weather::windDirection << endl;
+    out << std::setprecision(2) << weather::windGust10Min << endl;
+    out << std::setprecision(0) << weather::windGustDirection10Min << endl;
+    out << std::setprecision(2) << weather::averageWindSpeed2Min << endl;
+    out << std::setprecision(0) << weather::averageWindDirection2Min << endl;
+    out.close();
+
+    cout << date() << "Uploading WeatherData:" << endl;
+
+    //upload the data
+    std::string output = global::exec("./upload");
+
+    cout << output << std::flush;
+    cout << date() << "done" << endl;
+}
+
 int main(int argc, char** argv) {
     wiringPiSetup();
 
@@ -67,41 +103,13 @@ int main(int argc, char** argv) {
             weather::update();
 
             
+            uploadWeather();
+
             
-            //upload weather
-
-            //Write weather to file
-            std::ofstream out(".weather");
-            
-            //print the current time in the format required by wunderground
-            time_t tt = system_clock::to_time_t(system_clock::now());
-            struct std::tm * ptm = std::localtime(&tt);
-            out << std::put_time(ptm, "%F+%H%%3A%M%%3A%S") << endl;
-            //write the data with proper precision
-            out << std::fixed;
-            out << std::setprecision(1) << weather::humidity << endl;
-            out << std::setprecision(2) << weather::dewpoint << endl;
-            out << std::setprecision(2) << weather::temperature << endl;
-            out << std::setprecision(2) << weather::rainHour << endl;
-            out << std::setprecision(2) << weather::rainDay << endl;
-            out << std::setprecision(3) << weather::barometer << endl;
-            out << std::setprecision(2) << weather::windSpeed << endl;
-            out << std::setprecision(0) << weather::windDirection << endl;
-            out << std::setprecision(2) << weather::windGust10Min << endl;
-            out << std::setprecision(0) << weather::windGustDirection10Min << endl;
-            out << std::setprecision(2) << weather::averageWindSpeed2Min << endl;
-            out << std::setprecision(0) << weather::averageWindDirection2Min << endl;
-            out.close();
-
-            cout << date() << "Uploading WeatherData:" << endl;
-
-            //upload the data
-            std::string output = global::exec("./upload");
-
-            cout << output << std::flush;
-            cout << date() << "done" << endl;
 
         }
+
+        commands::parseCommandsFile();
 
         commands::getStatus(&gotStatus);
 
@@ -121,12 +129,15 @@ void global::begin() {
 std::string global::exec(const char* cmd) {
     std::array<char, 128> buffer;
     std::string result;
+//Prevent my editor from complaining about popen()
+#ifndef _WIN32
     std::shared_ptr<FILE> pipe(popen(cmd, "r"), pclose);
     if(!pipe) throw std::runtime_error("popen() failed!");
     while(!feof(pipe.get())) {
         if(fgets(buffer.data(), 128, pipe.get()) != nullptr)
             result += buffer.data();
     }
+#endif
     return result;
 }
 
