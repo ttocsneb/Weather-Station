@@ -8,7 +8,7 @@ if exist "%DIRECTORY%" (
 		echo Nothing to copy
 	) else (
 		copy "%DIRECTORY%\baseStation\%DESTINATION%\*" "%DESTINATION%"
-		del /q "%DIRECTORY%\baseStation\*"
+		del /q "%DIRECTORY%\baseStation\%DESTINATION%\*"
 		FOR /D %%p IN ("%DIRECTORY%\baseStation\*.*") DO rmdir "%%p" /s /q
 		rmdir "%DIRECTORY%\baseStation"
 	)

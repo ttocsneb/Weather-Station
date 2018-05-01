@@ -40,6 +40,12 @@
         "queue": "cpp",
         "chrono": "cpp",
         "xfunctional": "cpp",
-        "xlocmon": "cpp"
-    }
+        "xlocmon": "cpp",
+        "memory": "cpp",
+        "tuple": "cpp",
+        "xloctime": "cpp",
+        "codecvt": "cpp"
+    },
+    "python.pythonPath": "C:\\Users\\Benjamin\\AppData\\Local\\Programs\\Python\\Python36\\python.exe",
+    "C_Cpp.errorSquiggles": "Enabled"
 }
