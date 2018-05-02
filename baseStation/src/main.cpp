@@ -8,16 +8,13 @@
 #include <stdexcept>
 #include <array>
 
-#include <cppconn/driver.h>
-#include <cppconn/exception.h>
-#include <cppconn/resultset.h>
-#include <cppconn/statement.h>
 
 #include "main.h"
 #include "radio.h"
 #include "eprom.h"
 #include "weather.h"
 #include "commands.h"
+#include "sql.h"
 
 
 using std::cout;
@@ -55,56 +52,15 @@ void gotStatus() {
 
 /**
  * upload the weather data to wunderground
+ * 
+ * Also add a weather.data item to the SQL Server
  */
 void uploadWeather() {
     cout << date() << "Uploading WeatherData:" << endl;
 
-    //Generate the SQL command
-    std::stringstream ss;
-    ss << "INSERT INTO data ";
-    ss << "(humidity, dewpoint, temperature, rain_hour, rain_day, ";
-    ss << "pressure, wind_speed, wind_dir, wind_gust, wind_gust_dir, ";
-    ss << "wind_avg, wind_avg_dir) ";
-    ss << "VALUES (";
-    ss << weather::humidity << ", ";
-    ss << weather::dewpoint << ", ";
-    ss << weather::temperature << ", ";
-    ss << weather::rainHour << ", ";
-    ss << weather::rainDay << ", ";
-    ss << weather::barometer << ", ";
-    ss << weather::windSpeed << ", ";
-    ss << weather::windDirection << ", ";
-    ss << weather::windGust10Min << ", ";
-    ss << weather::windGustDirection10Min << ", ";
-    ss << weather::averageWindSpeed2Min << ", ";
-    ss << weather::averageWindDirection2Min << ")";
-    std::string com = ss.str();
-
-    try {
-        sql::Driver *driver;
-        sql::Connection *con;
-        sql::Statement *stmt;
-
-        driver = get_driver_instance();
-        con = driver->connect("localhost", "cpp", "");
-
-        stmt = con->createStatement();
-        stmt->execute("USE weather");
-        stmt->execute(com);
-        delete stmt;
-        delete con;
-
-        cout << date() << "Sent SQL Command: " << endl;
-        cout << com << endl;
-
-    } catch(sql::SQLException &e) {
-        cout << date() << "SQL Error: " << e.what();
-        cout << " (MySQL error code: " << e.getErrorCode();
-        cout << ", SQLState: " << e.getSQLState() << ")" << endl;
-
-        return;
-    }
-
+    mysql::addWeatherData();
+    mysql::pruneWeatherData();
+    mysql::commit();
 
     //upload the data
     std::string output = global::exec("./upload");

@@ -37,11 +37,11 @@ INCLUDES = -I$(IDIR) $(LIB_INC) -L$(LIB) $(LIBS)
 
 
 # Dependency files
-_DEPS = main.h radio.h eprom.h weather.h commands.h
+_DEPS = main.h radio.h eprom.h weather.h commands.h sql.h
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 
 # object files
-_OBJ = main.o radio.o eprom.o weather.o commands.o
+_OBJ = main.o radio.o eprom.o weather.o commands.o sql.o
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 
 

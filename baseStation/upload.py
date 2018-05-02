@@ -3,31 +3,38 @@ import mysql.connector as sql
 import urllib
 import datetime
 
+print("upload.py")
+
+command = "SELECT * FROM data WHERE date = (SELECT MAX(date) FROM data)"
+
 #connect to sql
 connection = sql.connect(user='upload', database='weather')
 
 # get the weather data
 cursor = connection.cursor()
-cursor.execute("SELECT MAX(date), humidity, dewpoint, temperature, rain_hour, rain_day, pressure, wind_speed, wind_dir, wind_gust, wind_gust_dir, wind_avg, wind_avg_dir from data")
+cursor.execute(command)
 data = cursor.fetchone()
 connection.close()
+
+print(command)
 
 #read the weather data
 
 date = str(data[0])
 humidity = "{:.1f}".format(data[1])
-dewpoint = "{:.2f}".format(data[2])
-temp = "{:.2f}".format(data[3])
-rain = "{:.2f}".format(data[4])
-rainday = "{:.2f}".format(data[5])
-pressure = "{:.4f}".format(data[6])
+temp = "{:.2f}".format(data[2])
+rain = "{:.2f}".format(data[3])
+rainday = "{:.2f}".format(data[4])
+pressure = "{:.4f}".format(data[5])
 
-wind_speed = "{:.1f}".format(data[7])
-wind_dir = str(data[8])
-wind_gust_speed = "{:.1f}".format(data[9])
-wind_gust_dir = str(data[10])
-wind_average_speed = "{:.1f}".format(data[11])
-wind_average_dir = str(data[12])
+wind_speed = "{:.1f}".format(data[6])
+wind_dir = str(data[7])
+wind_gust_speed = "{:.1f}".format(data[8])
+wind_gust_dir = str(data[9])
+wind_average_speed = "{:.1f}".format(data[10])
+wind_average_dir = str(data[11])
+
+dewpoint = "{:.2f}".format(data[12])
 
 print(date)
 '''

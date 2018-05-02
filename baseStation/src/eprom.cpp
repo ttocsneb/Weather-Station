@@ -8,14 +8,24 @@
 using std::cout;
 using std::endl;
 
-#define getName(x) #x
+std::string removeColons(std::string str) {
+    if(str.find("::") != std::string::npos) {
+        return str.replace(str.find("::"), 2, "_");
+    }
+    return str;
+}
+
+#define getName(x) removeColons(#x)
 
 #define EEPROM_FILE ".eeprom"
 
 uint32_t eeprom::refreshTime = 30000;
 uint32_t eeprom::listenTime = 2000;
-float eeprom::windConversion = 1.0;
-unsigned int eeprom::dailyRain = 0;
+
+float eeprom::weather::windConversion = 1.0;
+unsigned int eeprom::weather::dailyRain = 0;
+
+unsigned int eeprom::sql::weatherData_storageTime = 24;
 
 
 #define value(x) getName(x), x
@@ -37,7 +47,7 @@ void set_value(std::ostream& os, std::string token, T value) {
 }
 
 void eeprom::loadEEPROM() {
-    cout << date() << "> Loading EEPROM" << endl;
+    cout << date() << "Loading EEPROM" << endl;
 
     std::ifstream in(EEPROM_FILE);
 
@@ -48,26 +58,27 @@ void eeprom::loadEEPROM() {
         return;
     }
 
-    while(in.good()) {
-        std::string line;
-        in >> line;
+    std::string line;
+    while(in >> line) {
 
         if(get_value(in, line, value(refreshTime)))
             continue;
         if(get_value(in, line, value(listenTime)))
             continue;
-        if(get_value(in, line, value(windConversion)))
+        if(get_value(in, line, value(weather::windConversion)))
             continue;
-        if(get_value(in, line, value(dailyRain)))
+        if(get_value(in, line, value(weather::dailyRain)))
+            continue;
+        if(get_value(in, line, value(sql::weatherData_storageTime)))
             continue;
         
     }
 
-    cout << date() << "< EEPROM Loaded" << endl;
+    cout << date() << "done" << endl;
 }
 
 void eeprom::setEEPROM() {
-    cout << date() << "> Setting EEPROM" << endl;
+    cout << date() << "Setting EEPROM" << endl;
 
     std::ofstream out(EEPROM_FILE);
 
@@ -79,10 +90,11 @@ void eeprom::setEEPROM() {
 
     set_value(out, value(refreshTime));
     set_value(out, value(listenTime));
-    set_value(out, value(windConversion));
-    set_value(out, value(dailyRain));
+    set_value(out, value(weather::windConversion));
+    set_value(out, value(weather::dailyRain));
+    set_value(out, value(sql::weatherData_storageTime));
 
-    cout << date() << "< EEPROM Set" << endl;
+    cout << date() << "done" << endl;
 }
 
 void eeprom::syncEEPROM() {

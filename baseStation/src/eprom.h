@@ -9,9 +9,19 @@ namespace eeprom {
     extern uint32_t refreshTime;
     extern uint32_t listenTime;
 
-    extern float windConversion;
+    namespace weather {
 
-    extern unsigned int dailyRain;
+        extern float windConversion;
+
+        extern unsigned int dailyRain;
+
+    }
+
+    namespace sql {
+        extern unsigned int weatherData_storageTime;
+    }
+
+
 
     /**
      * Read EEPROM from file

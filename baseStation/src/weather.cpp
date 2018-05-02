@@ -42,11 +42,11 @@ void weather::update() {
     cout << date() << "> Calculating weatherData" << endl;
 
     //wind
-    windSpeed = radio::rawWindSpeed * eeprom::windConversion;
+    windSpeed = radio::rawWindSpeed * eeprom::weather::windConversion;
     windDirection = radio::rawWindDirection;
-    windGust10Min = radio::rawMaxWindSpeed * eeprom::windConversion;
+    windGust10Min = radio::rawMaxWindSpeed * eeprom::weather::windConversion;
     windGustDirection10Min = radio::rawMaxWindDirection;
-    averageWindSpeed2Min = radio::rawAverageWindSpeed * eeprom::windConversion;
+    averageWindSpeed2Min = radio::rawAverageWindSpeed * eeprom::weather::windConversion;
     averageWindDirection2Min = radio::rawAverageWindDirection;
 
     //humidity
@@ -99,16 +99,16 @@ void weather::update() {
     //reset dailyRain every day
     if(currDays > days) {
         days = currDays;
-        eeprom::dailyRain = 0;
+        eeprom::weather::dailyRain = 0;
         update = true;
     }
 
     if(radio::rawRainFall != 0) {
-        eeprom::dailyRain += radio::rawRainFall;
+        eeprom::weather::dailyRain += radio::rawRainFall;
         update = true;
     }
 
-    rainDay = eeprom::dailyRain / 100.0;
+    rainDay = eeprom::weather::dailyRain / 100.0;
 
     if(update) {
         eeprom::setEEPROM();
