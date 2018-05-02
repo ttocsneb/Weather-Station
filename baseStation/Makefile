@@ -9,8 +9,9 @@ IDIR = src
 SRCDIR = src
 # .o directory
 ODIR=bin
-LIB_INC=/usr/local/include
+LIB_INC=-I/usr/local/include
 LIB=/usr/local/lib
+LIBS=-lrf24 -lwiringPi -lmariadbclient -lmysqlcppconn
 
 PROG_NAME=baseStation
 
@@ -32,7 +33,7 @@ get:
 
 # Compile Flags
 CFLAGS=-Wall
-INCLUDES = -I$(IDIR) -I$(LIB_INC) -L$(LIB) -lrf24 -lwiringPi
+INCLUDES = -I$(IDIR) $(LIB_INC) -L$(LIB) $(LIBS)
 
 
 # Dependency files

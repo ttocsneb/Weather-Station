@@ -8,6 +8,11 @@
 #include <stdexcept>
 #include <array>
 
+#include <cppconn/driver.h>
+#include <cppconn/exception.h>
+#include <cppconn/resultset.h>
+#include <cppconn/statement.h>
+
 #include "main.h"
 #include "radio.h"
 #include "eprom.h"
@@ -52,30 +57,54 @@ void gotStatus() {
  * upload the weather data to wunderground
  */
 void uploadWeather() {
-    //Write weather to file
-    std::ofstream out(".weather");
-    
-    //print the current time in the format required by wunderground
-    time_t tt = system_clock::to_time_t(system_clock::now());
-    struct std::tm * ptm = std::localtime(&tt);
-    out << std::put_time(ptm, "%F+%H%%3A%M%%3A%S") << endl;
-    //write the data with proper precision
-    out << std::fixed;
-    out << std::setprecision(1) << weather::humidity << endl;
-    out << std::setprecision(2) << weather::dewpoint << endl;
-    out << std::setprecision(2) << weather::temperature << endl;
-    out << std::setprecision(2) << weather::rainHour << endl;
-    out << std::setprecision(2) << weather::rainDay << endl;
-    out << std::setprecision(3) << weather::barometer << endl;
-    out << std::setprecision(2) << weather::windSpeed << endl;
-    out << std::setprecision(0) << weather::windDirection << endl;
-    out << std::setprecision(2) << weather::windGust10Min << endl;
-    out << std::setprecision(0) << weather::windGustDirection10Min << endl;
-    out << std::setprecision(2) << weather::averageWindSpeed2Min << endl;
-    out << std::setprecision(0) << weather::averageWindDirection2Min << endl;
-    out.close();
-
     cout << date() << "Uploading WeatherData:" << endl;
+
+    //Generate the SQL command
+    std::stringstream ss;
+    ss << "INSERT INTO data ";
+    ss << "(humidity, dewpoint, temperature, rain_hour, rain_day, ";
+    ss << "pressure, wind_speed, wind_dir, wind_gust, wind_gust_dir, ";
+    ss << "wind_avg, wind_avg_dir) ";
+    ss << "VALUES (";
+    ss << weather::humidity << ", ";
+    ss << weather::dewpoint << ", ";
+    ss << weather::temperature << ", ";
+    ss << weather::rainHour << ", ";
+    ss << weather::rainDay << ", ";
+    ss << weather::barometer << ", ";
+    ss << weather::windSpeed << ", ";
+    ss << weather::windDirection << ", ";
+    ss << weather::windGust10Min << ", ";
+    ss << weather::windGustDirection10Min << ", ";
+    ss << weather::averageWindSpeed2Min << ", ";
+    ss << weather::averageWindDirection2Min << ")";
+    std::string com = ss.str();
+
+    try {
+        sql::Driver *driver;
+        sql::Connection *con;
+        sql::Statement *stmt;
+
+        driver = get_driver_instance();
+        con = driver->connect("localhost", "cpp", "");
+
+        stmt = con->createStatement();
+        stmt->execute("USE weather");
+        stmt->execute(com);
+        delete stmt;
+        delete con;
+
+        cout << date() << "Sent SQL Command: " << endl;
+        cout << com << endl;
+
+    } catch(sql::SQLException &e) {
+        cout << date() << "SQL Error: " << e.what();
+        cout << " (MySQL error code: " << e.getErrorCode();
+        cout << ", SQLState: " << e.getSQLState() << ")" << endl;
+
+        return;
+    }
+
 
     //upload the data
     std::string output = global::exec("./upload");

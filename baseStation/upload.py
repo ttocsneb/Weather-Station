@@ -1,32 +1,56 @@
 import requests
+import mysql.connector as sql
+import urllib
+import datetime
+
+#connect to sql
+connection = sql.connect(user='upload', database='weather')
+
+# get the weather data
+cursor = connection.cursor()
+cursor.execute("SELECT MAX(date), humidity, dewpoint, temperature, rain_hour, rain_day, pressure, wind_speed, wind_dir, wind_gust, wind_gust_dir, wind_avg, wind_avg_dir from data")
+data = cursor.fetchone()
+connection.close()
 
 #read the weather data
-f = open(".weather", "r")
 
-date = f.readline().rstrip()
-humidity = f.readline().rstrip()
-dewpoint = f.readline().rstrip()
-temp = f.readline().rstrip()
-rain = f.readline().rstrip()
-rainday = f.readline().rstrip()
-pressure = f.readline().rstrip()
+date = str(data[0])
+humidity = "{:.1f}".format(data[1])
+dewpoint = "{:.2f}".format(data[2])
+temp = "{:.2f}".format(data[3])
+rain = "{:.2f}".format(data[4])
+rainday = "{:.2f}".format(data[5])
+pressure = "{:.4f}".format(data[6])
 
-wind_speed = f.readline().rstrip()
-wind_dir = f.readline().rstrip()
-wind_gust_speed = f.readline().rstrip()
-wind_gust_dir = f.readline().rstrip()
-wind_average_speed = f.readline().rstrip()
-wind_average_dir = f.readline().rstrip()
+wind_speed = "{:.1f}".format(data[7])
+wind_dir = str(data[8])
+wind_gust_speed = "{:.1f}".format(data[9])
+wind_gust_dir = str(data[10])
+wind_average_speed = "{:.1f}".format(data[11])
+wind_average_dir = str(data[12])
 
-f.close()
-
+print(date)
+'''
+print(humidity)
+print(dewpoint)
+print(temp)
+print(rain)
+print(rainday)
+print(pressure)
+print(wind_speed)
+print(wind_dir)
+print(wind_gust_speed)
+print(wind_gust_dir)
+print(wind_average_speed)
+print(wind_average_dir)
+'''
 
 # create a string to hold the first part of the URL
 WUurl = "https://weatherstation.wunderground.com/weatherstation/updateweatherstation.php?"
 WU_station_id = "KUTPROVO29" # Replace XXXX with your PWS ID
 WU_station_pwd = "5mfy6wkx" # Replace YYYY with your Password
 WUcreds = "ID=" + WU_station_id + "&PASSWORD="+ WU_station_pwd
-date_str = "&dateutc=" + date
+date_str = "&dateutc=" + urllib.parse.quote(date)
 action_str = "&action=updateraw"
 
 request = (WUurl +
