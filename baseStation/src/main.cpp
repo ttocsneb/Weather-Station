@@ -140,6 +140,16 @@ void global::toggleLight() {
     digitalWrite(LIGHT_PIN, lightValue);
 }
 
+std::string global::getsqlDate(std::chrono::system_clock::time_point t) {
+    std::stringstream ss;
+
+    time_t tt = system_clock::to_time_t(t);
+    struct std::tm * ptm = std::localtime(&tt);
+
+    ss << std::put_time(ptm, "%Y-%m-%d %H:%M:%S");
+    return ss.str();
+}
+
 std::string date() {
     std::stringstream ss;
 

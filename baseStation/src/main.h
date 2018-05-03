@@ -44,6 +44,8 @@ namespace global {
      */
     void toggleLight();
 
+    std::string getsqlDate(std::chrono::system_clock::time_point t=system_clock::now());
+
     
     /**
      * Set a boolean value in a uint8_t array

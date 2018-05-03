@@ -2,10 +2,12 @@
 #include "main.h"
 #include "eprom.h"
 #include "radio.h"
+#include "sql.h"
 
 #include <iostream>
 #include <queue>
 #include <fstream>
+#include <sstream>
 
 using std::cout;
 using std::endl;
@@ -311,16 +313,18 @@ bool checkLoadEeprom(std::istream& is, char command) {
 
 void commands::parseCommandsFile() {
 
-    std::ifstream in(".commands");
 
-    if(!in.is_open() || in.peek() == std::ifstream::traits_type::eof()) {
+    std::string strings = "";
+
+    if(!mysql::getCommands(strings)) {
         return;
     }
 
-    cout << date() << "Parsing Commands file" << endl;
+    cout << date() << "Parsing Commands" << endl;
+
+    std::stringstream in(strings);
 
     char command;
-
 
     while(in >> command) {
 
@@ -333,7 +337,4 @@ void commands::parseCommandsFile() {
         //TODO: add more commands as needed
     }
 
-    in.close();
-    //clear the commands file
-    std::ofstream out(".commands");
 }

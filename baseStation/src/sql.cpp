@@ -18,6 +18,27 @@ using std::endl;
 
 sql::Connection* connect = NULL;
 
+bool execute(sql::Statement* stmt, std::string command) {
+    bool ret = stmt->execute(command);
+    cout << "Sent SQL Command:" << endl;
+    cout << command << endl;
+    return ret;
+}
+
+sql::ResultSet* executeQuery(sql::Statement* stmt, std::string command) {
+    sql::ResultSet* ret = stmt->executeQuery(command);
+    cout << "Sent SQL Query:" << endl;
+    cout << command << endl;
+    return ret;
+}
+
+int executefoo(sql::Statement* stmt, std::string command) {
+    int ret = stmt->executeUpdate(command);
+    cout << "Sent SQL Update:" << endl;
+    cout << command << endl;
+    return ret;
+}
+
 void printSQLError(sql::SQLException &e) {
     cout << date() << "SQL Error: " << e.what();
     cout << " (MySQL error code: " << e.getErrorCode();
@@ -90,12 +111,9 @@ bool mysql::addWeatherData() {
         //execute the SQL command
         stmt = connect->createStatement();
         stmt->execute("USE weather");
-        stmt->execute(com);
+        execute(stmt, com);
 
         delete stmt;
-
-        cout << date() << "Sent SQL Command: " << endl;
-        cout << com << endl;
 
     } catch(sql::SQLException &e) {
         printSQLError(e);
@@ -103,7 +121,6 @@ bool mysql::addWeatherData() {
         return false;
     }
 
-    cout << date() << "done" << endl;
 
     return true;
 }
@@ -118,30 +135,68 @@ bool mysql::pruneWeatherData() {
     //delete all entries from data where the date 
     //is older than eeprom::sql::weatherData_storageTime hours
 
-    time_t tt = system_clock::to_time_t(system_clock::now() 
-        - std::chrono::hours(eeprom::sql::weatherData_storageTime));
-
-    struct std::tm * ptm = std::localtime(&tt);
-
     std::stringstream ss;
     ss << "DELETE FROM data ";
     ss << "WHERE date <= '";
-    ss << std::put_time(ptm, "%Y-%m-%d %H:%M:%S");
+    ss << global::getsqlDate(system_clock::now() 
+        - std::chrono::hours(eeprom::sql::weatherData_storageTime));
     ss << "'";
 
-    cout << date() << "Command:" << endl;
-    cout << ss.str() << endl;
     
     try {
         sql::Statement *statement = connect->createStatement();
 
         statement->execute("USE weather");
-        statement->execute(ss.str());
+        execute(statement, ss.str());
 
-        cout << date() << "done" << endl;
+
+        delete statement;
+
         return true;
     } catch(sql::SQLException &e) {
         printSQLError(e);
     }
+    return false;
+}
+
+bool mysql::getCommands(std::string &commands) {
+    commands = "";
+    if(!connectSQL()) {
+        return false;
+    }
+
+    cout << date() << "Collecting Commands from SQL" << endl;
+
+    try {
+        sql::Statement *statement = connect->createStatement();
+        sql::ResultSet *result;
+
+        //Get the commands
+        statement->execute("USE weather");
+        result = executeQuery(statement, "SELECT * FROM commands");
+        if(!result->next()) {
+            cout << "Found no commands" << endl;
+            return false;
+        }
+
+        cout << "Got Commands:" << endl;
+
+        //Read the commands into the commands variable
+        do {
+            commands = commands + result->getString("command") + "\n";
+            cout << "#" << result->getInt("id") << ": " << result->getString("command") << endl;
+        } while(result->next());
+
+        //remove the read commands
+        execute(statement, "DELETE FROM commands");
+
+        delete statement;
+        delete result;
+
+        return true;
+    } catch(sql::SQLException &e) {
+        printSQLError(e);
+    }
+    
     return false;
 }

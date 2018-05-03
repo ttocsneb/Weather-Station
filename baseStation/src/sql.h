@@ -1,6 +1,11 @@
 #ifndef SQL_H
 #define SQL_H
 
+#include <string>
+#include <stdint.h>
+
+//MySQL Connector/C++ Documentation: https://dev.mysql.com/doc/dev/connector-cpp/8.0/
+
 namespace mysql {
 
     /**
@@ -30,6 +35,16 @@ namespace mysql {
      * @return true if successful
      */
     bool commit();
+
+    /**
+     * Load the commands from the SQL weather.commands table
+     * into the supplied array then clear the table
+     * 
+     * @param commands string where the commands will be put
+     * 
+     * @return true if successful
+     */
+    bool getCommands(std::string &commands);
 
 }
 
