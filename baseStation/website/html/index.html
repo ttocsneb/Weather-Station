@@ -17,6 +17,9 @@
         <!-- Custom styles for this template-->
         <link href="startbootstrap-sb-admin/css/sb-admin.css" rel="stylesheet">
         
+        <!-- Custom styles for this website -->
+        <link href="style.css" rel="stylesheet">
+        
     </head>
     <body class="fixed-nav sticky-footer bg-dark" id="page-top">
         <!-- Navigation -->
@@ -56,12 +59,81 @@
                 
                 <!-- Body -->
                 
+                <!-- Status -->
                 <div class="card mb-3">
                     <div class="card-header">Status</div>
                     <div class="card-body">
-                        Hello World!
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="alert alert-success" id="station-reporting"><strong>Successfully Reporting</strong></div>
+                                <div class="alert alert-danger" id="station-not-reporting"><strong>Not Reporting</strong></div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-3">
+                                <p>Battery: <span id="station-battery">X</span> V</p>
+                                <p>Charging: <span id="station-isCharging">(Yes/No)</span></p>
+                                <p>Time Spent Charging: <span id="station-chargeTime">X</span> hours</p>
+                            </div>
+                            <div class="col-sm-3">
+                                <p>Lost Packets: <span id="station-lostPackets">X</span></p>
+                                <p>Number of resets: <span id="station-resets">X</span> </p>
+                            </div>
+                        </div>
                     </div>
-                    <div class="card-footer small text-muted">Updated X</div>
+                    <div class="card-footer small text-muted">Updated <span id="station-update-time">([today, yesterday, X days ago], at h:m)</span></div>
+                </div>
+                
+                <!-- Current weather data -->
+                <div class="card mb-3">
+                    <div class="card-header">Current weather</div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-sm-3">
+                                <p>Temperature: <span id="weather-temp">X</span> F</p>
+                                <p>Dew Point: <span id="weather-dew">X</span> F</p>
+                                <p>Humidity: <span id="weather-hum">X</span>%</p>
+                                <p>Pressure: <span id="weather-pres">X</span> inHg</p>
+                            </div>
+                            <div class="col-lg-6 col-sm-5">
+                                <p>Rain (Past Hour): <span id="weather-rain-hour">X</span> in</p>
+                                <p>Rain (Past Day): <span id="weather-rain-day">X</span> in</p>
+                                <p>
+                                    Wind: <span id="weather-wind">X</span> mph 
+                                    coming from the <span id="weather-wind-dir">north</span>
+                                </p>
+                                <p>
+                                    Gust: <span id="weather-gust">X</span> mph
+                                    coming from the <span id="weather-gust-dir">south-east</span>
+                                </p>
+                                <p>
+                                    Average: <span id="weather-avg">X</span> mph
+                                    coming from the <span id="weather-avg-dir">west</span>
+                                </p>
+                            </div>
+                            <div class="clearfix visible-xs">
+                                <div class="wu-sticker">
+                                <h5>Weather Underground</h5>
+                                    <a href="http://www.wunderground.com/weatherstation/WXDailyHistory.asp?ID=KUTPROVO29"><img src="http://banners.wunderground.com/cgi-bin/banner/ban/wxBanner?bannertype=pws250&weatherstationcount=KUTPROVO29" width="250" height="150" border="0" alt="Weather Underground PWS KUTPROVO29" /></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer small text-muted">
+                        Updated <span id="weather-update-time">[today, yesterday, X days ago], at h:m</span>
+                    </div>
+                </div>
+                
+                <div class="card mb-3">
+                    <div class="card-header">Temperature graph</div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-sm-6 chart-container">
+                                <canvas id="temperature-chart" width="100%"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer small text-muted"></div>
                 </div>
                 
             </div>
@@ -78,9 +150,14 @@
             <script src="startbootstrap-sb-admin/vendor/datatables/dataTables.bootstrap4.js"></script>
             <!-- Custom scripts for all pages-->
             <script src="startbootstrap-sb-admin/js/sb-admin.min.js"></script>
+            
+            <script src="moment.min.js"></script>
+            
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.js"></script>
+            
             <!-- Custom scripts for this page-->
-            <script src="startbootstrap-sb-admin/js/sb-admin-datatables.min.js"></script>
-            <script src="startbootstrap-sb-admin/js/sb-admin-charts.min.js"></script>
+            <script src="charts.js"></script>
+            
         </div>
     </body>
 </html>
