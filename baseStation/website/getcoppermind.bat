@@ -2,15 +2,15 @@
 
 set DIRECTORY=H:\Benjamin\Temp
 set DESTINATION=html
+set COPYPY=..\copy.py
+set IGNORE=startbootstrap-sb-admin
 
 if exist "%DIRECTORY%" (
 	if not exist "%DIRECTORY%\baseStation\%DESTINATION%" (
 		echo Nothing to copy
 	) else (
-		copy "%DIRECTORY%\baseStation\%DESTINATION%\*" "%DESTINATION%"
-		del /q "%DIRECTORY%\baseStation\%DESTINATION%\*"
-		FOR /D %%p IN ("%DIRECTORY%\baseStation\*.*") DO rmdir "%%p" /s /q
-		rmdir "%DIRECTORY%\baseStation"
+		python %COPYPY% %DIRECTORY%\baseStation\%DESTINATION% %DESTINATION% True %IGNORE%
+		rmdir /s /q %DIRECTORY%\baseStation\
 	)
 ) else (
     echo %DIRECTORY% does not exist.
