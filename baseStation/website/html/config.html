@@ -27,6 +27,7 @@
         <meta name="msapplication-TileImage" content="/favicon/ms-icon-144x144.png">
         <meta name="theme-color" content="#ffffff">
         
+        
         <!-- Bootstrap core CSS-->
         <link href="startbootstrap-sb-admin/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
         <!-- Custom fonts for this template-->
@@ -80,7 +81,10 @@
             <div class="container-fluid">
                 <!-- Breadcrumb Page Title -->
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item active">Dashboard</li>
+                    <li class="breadcrumb-item">
+                        <a href="index.html">DashBoard</a>
+                    </li>
+                    <li class="breadcrumb-item active">Settings</li>
                 </ol>
                 
                 
@@ -111,57 +115,6 @@
                     <div class="card-footer small text-muted">Updated <span id="station-update-time">([today, yesterday, X days ago], at h:m)</span></div>
                 </div>
                 
-                <!-- Current weather data -->
-                <div class="card mb-3">
-                    <div class="card-header">Current weather</div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-sm-3">
-                                <p>Temperature: <span id="weather-temp">X</span> F</p>
-                                <p>Dew Point: <span id="weather-dew">X</span> F</p>
-                                <p>Humidity: <span id="weather-hum">X</span>%</p>
-                                <p>Pressure: <span id="weather-pres">X</span> inHg</p>
-                            </div>
-                            <div class="col-lg-6 col-sm-5">
-                                <p>Rain (Past Hour): <span id="weather-rain-hour">X</span> in</p>
-                                <p>Rain (Past Day): <span id="weather-rain-day">X</span> in</p>
-                                <p>
-                                    Wind: <span id="weather-wind">X</span> mph 
-                                    coming from the <span id="weather-wind-dir">north</span>
-                                </p>
-                                <p>
-                                    Gust: <span id="weather-gust">X</span> mph
-                                    coming from the <span id="weather-gust-dir">south-east</span>
-                                </p>
-                                <p>
-                                    Average: <span id="weather-avg">X</span> mph
-                                    coming from the <span id="weather-avg-dir">west</span>
-                                </p>
-                            </div>
-                            <div class="clearfix visible-xs">
-                                <div class="wu-sticker">
-                                <h5>Weather Underground</h5>
-                                    <a href="http://www.wunderground.com/weatherstation/WXDailyHistory.asp?ID=KUTPROVO29"><img src="http://banners.wunderground.com/cgi-bin/banner/ban/wxBanner?bannertype=pws250&weatherstationcount=KUTPROVO29" width="250" height="150" border="0" alt="Weather Underground PWS KUTPROVO29" /></a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card-footer small text-muted">
-                        Updated <span id="weather-update-time">[today, yesterday, X days ago], at h:m</span>
-                    </div>
-                </div>
-                
-                <div class="card mb-3">
-                    <div class="card-header">Temperature graph</div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-sm-6 chart-container">
-                                <canvas id="temperature-chart" width="100%"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card-footer small text-muted"></div>
-                </div>
                 
             </div>
             
