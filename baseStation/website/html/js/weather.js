@@ -56,6 +56,6 @@ function updateWeather() {
 }
 
 window.addEventListener("load",function(event) {
-    setInterval(updateWeather, 60*1000);
+    setInterval(updateWeather, 30*1000);
     updateWeather();
 });
