@@ -4,6 +4,8 @@ $username = "web";
 $password = "";
 $dbname = "weather";
 
+mysqli_report(MYSQLI_REPORT_STRICT);
+
 $conn = new mysqli($servername, $username, $password, $dbname);
 
 if($conn->connect_error) {

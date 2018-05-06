@@ -239,18 +239,12 @@ var windChart = new Chart(windElement, {
     }
 });
 
-
-
-function loadWeather() {
+function loadCharts() {
     
     $.get("/php/weather-status-full.php", function(data) {
         var obj = JSON.parse(data).data;
 
-        var temperature = [];
-        var dewpoint = [];
-        var humidity = [];
-
-
+        
         var row = {};
         for(var i = 0; i < obj.length; i++) {
             
@@ -300,7 +294,8 @@ function loadWeather() {
     });
     
 }
+ 
 
-window.onload = function() {
-    loadWeather();
-};
+window.addEventListener("load",function(event) {
+    loadCharts();
+});
