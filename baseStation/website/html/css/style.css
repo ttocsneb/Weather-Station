@@ -6,3 +6,7 @@
     border: 2px grey solid;
     min-width: 290px;
 }
+
+#temperature-chart {
+    min-height: 150px;
+}
