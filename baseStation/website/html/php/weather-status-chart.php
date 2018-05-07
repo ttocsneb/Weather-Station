@@ -30,11 +30,12 @@ class Data {
 
 $data = new Data();
 
-$qry = "SELECT * FROM data WHERE date = (SELECT MAX(date) FROM data)";
+$qry = "SELECT * FROM graphdata WHERE date = (SELECT MAX(date) FROM graphdata)";
 $result = $conn->query($qry);
 
 if($result->num_rows > 0) {
     $row = $result->fetch_assoc();
+    $data->date = $row["date"];
     $data->temperature = $row["temperature"];
     $data->dewpoint = $row["dewpoint"];
     $data->humidity = $row["humidity"];
@@ -47,23 +48,6 @@ if($result->num_rows > 0) {
     $data->wind_gust_dir = $row["wind_gust_dir"];
     $data->wind_avg = $row["wind_avg"];
     $data->wind_avg_dir = $row["wind_avg_dir"];
-
-    #Calculate the string to display for the last updated time in the format
-    # [today/yesterday/X days ago], at h:m [am:pm]
-    $then = new DateTime($row["date"]);
-    $now = new DateTime();
-    $updateTime = $now->diff($then);
-
-    if($updateTime->d < 1) {
-        $data->date = "today";
-    } else if($updateTime->d < 2) {
-        $data->date = "yesterday";
-    } else {
-        $data->date = $updateTime->d . " days ago";
-    }
-
-    $data->date = $data->date . " at " . $then->format('h:i:s a');
-
 }
 
 $jsonWeather = json_encode($data);

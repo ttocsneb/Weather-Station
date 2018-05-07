@@ -34,7 +34,7 @@ class Weather {
 
 $weather = new Weather();
 
-$qry = "SELECT * FROM data";
+$qry = "SELECT * FROM graphdata";
 $result = $conn->query($qry);
 
 if($result->num_rows > 0) {

@@ -59,6 +59,7 @@ void uploadWeather() {
     cout << date() << "Uploading WeatherData:" << endl;
 
     mysql::addWeatherData();
+    mysql::minifyWeatherData(5);
     mysql::pruneWeatherData();
     mysql::commit();
 

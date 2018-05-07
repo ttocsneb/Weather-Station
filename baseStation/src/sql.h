@@ -26,6 +26,17 @@ namespace mysql {
     bool pruneWeatherData();
 
     /**
+     * Minify the Weather data into groups of age.
+     * 
+     * The minified data is put into weather.graphdata
+     * 
+     * @param age minimum age of the oldest row (minutes)
+     * 
+     * @return true if successful
+     */
+    bool minifyWeatherData(unsigned int age);
+
+    /**
      * Commit the changes to the SQL database
      * 
      * This should be called last after all other actions 

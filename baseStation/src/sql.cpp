@@ -14,6 +14,7 @@
 #include "eprom.h"
 
 using std::cout;
+using std::cerr;
 using std::endl;
 
 sql::Connection* connect = NULL;
@@ -40,9 +41,9 @@ int executefoo(sql::Statement* stmt, std::string command) {
 }
 
 void printSQLError(sql::SQLException &e) {
-    cout << date() << "SQL Error: " << e.what();
-    cout << " (MySQL error code: " << e.getErrorCode();
-    cout << ", SQLState: " << e.getSQLState() << ")" << endl;
+    cerr << date() << "SQL Error: " << e.what();
+    cerr << " (MySQL error code: " << e.getErrorCode();
+    cerr << ", SQLState: " << e.getSQLState() << ")" << endl;
 }
 
 bool connectSQL() {
@@ -50,6 +51,7 @@ bool connectSQL() {
         try {
             sql::Driver* driver = get_driver_instance();
             connect = driver->connect("localhost", "cpp", "");
+            connect->setSchema("weather");
         } catch (sql::SQLException &e) {
             printSQLError(e);
             return false;
@@ -110,7 +112,6 @@ bool mysql::addWeatherData() {
 
         //execute the SQL command
         stmt = connect->createStatement();
-        stmt->execute("USE weather");
         execute(stmt, com);
 
         delete stmt;
@@ -136,7 +137,7 @@ bool mysql::pruneWeatherData() {
     //is older than eeprom::sql::weatherData_storageTime hours
 
     std::stringstream ss;
-    ss << "DELETE FROM data ";
+    ss << "DELETE FROM graphdata ";
     ss << "WHERE date <= '";
     ss << global::getsqlDate(system_clock::now() 
         - std::chrono::hours(eeprom::sql::weatherData_storageTime));
@@ -146,7 +147,6 @@ bool mysql::pruneWeatherData() {
     try {
         sql::Statement *statement = connect->createStatement();
 
-        statement->execute("USE weather");
         execute(statement, ss.str());
 
 
@@ -157,6 +157,77 @@ bool mysql::pruneWeatherData() {
         printSQLError(e);
     }
     return false;
+}
+
+bool mysql::minifyWeatherData(unsigned int age) {
+
+    //Get the date of the oldest entry
+    const std::string GET_AGE = 
+        "SELECT "
+            "UNIX_TIMESTAMP(MIN(date)) AS date "
+        "FROM data";
+
+    //Insert into graphdata the average of all the rows in data
+    const std::string ADD_AVERAGE = 
+        "INSERT INTO graphdata "
+        "SELECT "
+            "FROM_UNIXTIME("
+                "(UNIX_TIMESTAMP(MIN(date)) + "
+                "UNIX_TIMESTAMP(MAX(date)))"
+                " / 2)"
+            " AS average_date,"
+            " AVG(humidity),"
+            " AVG(temperature),"
+            " MAX(rain_hour),"
+            " MAX(rain_day),"
+            " AVG(pressure),"
+            " AVG(wind_speed),"
+            " AVG(wind_dir),"
+            " MAX(wind_gust),"
+            " AVG(wind_gust_dir),"
+            " AVG(wind_avg),"
+            " AVG(wind_avg_dir),"
+            " AVG(dewpoint)"
+        " FROM data";
+    
+    //Delete all of the rows in data except for the newest one
+    const std::string REMOVE_ROWS = 
+        "DELETE d FROM data AS d "
+            "JOIN "
+                "(SELECT MAX(date) AS date FROM data) "
+                "AS lim "
+            "ON d.date < lim.date";
+    
+
+    try {
+        sql::Statement* stmt = connect->createStatement();
+
+        sql::ResultSet* res = executeQuery(stmt, GET_AGE);
+
+        res->first();
+        uint32_t timestamp = res->getInt("date");
+
+        std::time_t t = std::time(nullptr);
+
+        if(t - timestamp < 60 * age) {
+            return true;
+        }
+
+        cout << date() << "Minifying Weather Data: " << endl;
+        
+        execute(stmt, ADD_AVERAGE);
+        execute(stmt, REMOVE_ROWS);
+
+        delete res;
+        delete stmt;
+
+        return true;
+    } catch(sql::SQLException &e) {
+        printSQLError(e);
+    }
+
+    return false;
+
 }
 
 bool mysql::getCommands(std::string &commands) {
@@ -172,7 +243,6 @@ bool mysql::getCommands(std::string &commands) {
         sql::ResultSet *result;
 
         //Get the commands
-        statement->execute("USE weather");
         result = executeQuery(statement, "SELECT * FROM commands");
         if(!result->next()) {
             cout << "Found no commands" << endl;
