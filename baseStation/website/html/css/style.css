@@ -10,3 +10,7 @@
 #temperature-chart {
     min-height: 150px;
 }
+
+#station-reporting, #station-not-reporting {
+    display: none;
+}

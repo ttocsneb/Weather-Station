@@ -267,14 +267,12 @@ function addRow(row) {
         y: row.humidity
     });
 
-    console.log("temp: " + row.temperature);
     //Temperature
     tempChart.data.datasets[1].data.push({
         x: row.date,
         y: row.temperature
     });
 
-    console.log("rain: " + row.rain);
     //Rain
     rainChart.data.datasets[0].data.push({
         x: row.date,

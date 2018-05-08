@@ -68,6 +68,8 @@ namespace commands {
         extern bool isCharging;
         extern float batteryVoltage;
         extern uint8_t numResets;
+        extern uint32_t uptime;
+        extern bool isReporting;
     }
 
     /**

@@ -5,6 +5,7 @@
 #include <cstddef>
 
 #include "commands.h"
+#include "main.h"
 
 #define PACKET_SIZE 32
 
@@ -35,9 +36,13 @@ namespace radio {
     /**
      * Update the raw weather data with the station.
      * 
+     * @note t may be changed if the loop time needs adjustment
+     * 
+     * @param t The time at which the main loop will wait for
+     * 
      * @note should only be called once every 30 seconds
      */
-    bool update();
+    bool update(time_point &t);
 
     
     extern uint16_t rawWindSpeed;

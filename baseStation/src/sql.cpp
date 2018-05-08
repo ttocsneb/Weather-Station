@@ -8,10 +8,12 @@
 #include <cppconn/exception.h>
 #include <cppconn/resultset.h>
 #include <cppconn/statement.h>
+#include <cppconn/prepared_statement.h>
 
 #include "weather.h"
 #include "main.h"
 #include "eprom.h"
+#include "commands.h"
 
 using std::cout;
 using std::cerr;
@@ -19,24 +21,25 @@ using std::endl;
 
 sql::Connection* connect = NULL;
 
+void sendStatement(std::string command) {
+    cout << "Sent SQL Command:" << endl << command << endl;
+}
+
 bool execute(sql::Statement* stmt, std::string command) {
     bool ret = stmt->execute(command);
-    cout << "Sent SQL Command:" << endl;
-    cout << command << endl;
+    sendStatement(command);
     return ret;
 }
 
 sql::ResultSet* executeQuery(sql::Statement* stmt, std::string command) {
     sql::ResultSet* ret = stmt->executeQuery(command);
-    cout << "Sent SQL Query:" << endl;
-    cout << command << endl;
+    sendStatement(command);
     return ret;
 }
 
 int executefoo(sql::Statement* stmt, std::string command) {
     int ret = stmt->executeUpdate(command);
-    cout << "Sent SQL Update:" << endl;
-    cout << command << endl;
+    sendStatement(command);
     return ret;
 }
 
@@ -160,6 +163,9 @@ bool mysql::pruneWeatherData() {
 }
 
 bool mysql::minifyWeatherData(unsigned int age) {
+    if(!connectSQL()) {
+        return false;
+    }
 
     //Get the date of the oldest entry
     const std::string GET_AGE = 
@@ -204,11 +210,10 @@ bool mysql::minifyWeatherData(unsigned int age) {
 
         sql::ResultSet* res = executeQuery(stmt, GET_AGE);
 
+        //Only Minify if the oldest row is more than age minutes old
         res->first();
         uint32_t timestamp = res->getInt("date");
-
         std::time_t t = std::time(nullptr);
-
         if(t - timestamp < 60 * age) {
             return true;
         }
@@ -227,8 +232,52 @@ bool mysql::minifyWeatherData(unsigned int age) {
     }
 
     return false;
-
 }
+
+bool mysql::updateStatus() {
+    if(!connectSQL()) {
+        return false;
+    }
+
+    cout << date() << "Updating SQL Status" << endl;
+
+    const std::string SET_STATUS = 
+        "UPDATE status "
+            "SET "
+                "battery=?, "
+                "is_charging=?, "
+                "time_charging=?, "
+                "uptime=?, "
+                "resets=?, "
+                "lost_packets=?, "
+                "reporting=?";
+
+    try {
+
+        sql::PreparedStatement* stmt = connect->prepareStatement(SET_STATUS);
+
+        stmt->setDouble(1, commands::status::batteryVoltage);
+        stmt->setBoolean(2, commands::status::isCharging);
+        stmt->setInt(3, commands::status::chargingTime);
+        stmt->setInt(4, commands::status::uptime);
+        stmt->setInt(5, commands::status::numResets);
+        stmt->setInt(6, commands::status::lostPackets);
+        stmt->setBoolean(7, commands::status::isReporting);
+
+        stmt->execute();
+        sendStatement(SET_STATUS);
+
+        
+        delete stmt;
+
+        return true;
+    } catch(sql::SQLException &e) {
+        printSQLError(e);
+    }
+
+    return false;
+}
+
 
 bool mysql::getCommands(std::string &commands) {
     commands = "";

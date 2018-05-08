@@ -27,6 +27,8 @@ uint16_t commands::status::chargingTime;
 bool commands::status::isCharging;
 float commands::status::batteryVoltage;
 uint8_t commands::status::numResets;
+uint32_t commands::status::uptime;
+bool commands::status::isReporting;
 
 //==================== Command Queue ====================
 
@@ -176,7 +178,7 @@ uint8_t readStatus(const uint8_t* data) {
     const uint8_t STATUS_SIZE = RESETS_LOC + 1;
 
     commands::status::lostPackets = global::get<uint16_t>(data + LOSTPACKETS_LOC);
-    commands::status::chargingTime = 0;//TODO: implement
+    commands::status::chargingTime = global::get<uint16_t>(data + CHARGING_TIME_LOC);
     commands::status::isCharging = global::getBool(data + IS_CHARGING_LOC, IS_CHARGING_LOCBIN);
     commands::status::batteryVoltage = global::get<uint8_t>(data + BATTERY_LOC) / 50.0;
     commands::status::numResets = global::get<uint8_t>(data + RESETS_LOC);

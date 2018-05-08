@@ -119,7 +119,7 @@ void sendCommands() {
     }
 }
 
-bool radio::update() {
+bool radio::update(time_point &reloadTime) {
     static unsigned int lost_packets(100);
     bool successfull = false;
 
@@ -154,7 +154,10 @@ bool radio::update() {
         //if a packet was received, wait until the next update time.
         if(successfull) {
             cout << date() << "Packet received, waiting " << (eeprom::refreshTime - eeprom::listenTime / 2) / 1000.0 << " seconds to sync with the station" << endl;
-            sleep_for(std::chrono::milliseconds(eeprom::refreshTime - eeprom::listenTime / 2));
+            reloadTime += (Clock::now() - t) - std::chrono::milliseconds(eeprom::listenTime / 2);
+
+            //((refresh time - listentime) / 2) - (refresh time - (now - t))
+            return true;
         }
         return false;
     } else {
@@ -170,8 +173,10 @@ bool radio::update() {
         if(successfull) {
             lost_packets = std::min(lost_packets - 1, (unsigned int)(0));
             sendCommands();
+            commands::status::isReporting = true;
         } else {
             lost_packets++;
+            commands::status::isReporting = false;
         }
     }
 

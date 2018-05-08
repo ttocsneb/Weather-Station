@@ -84,21 +84,20 @@ int main(int argc, char** argv) {
 
 
     while(true) {
-        time_point t = system_clock::now() + 30s;
-        if(radio::update()) {
+        time_point t = system_clock::now() + std::chrono::milliseconds(eeprom::refreshTime);
+        if(radio::update(t)) {
             weather::update();
 
-            
+
+            commands::getStatus(&gotStatus);
+            mysql::updateStatus();
+
             uploadWeather();
 
             
+            commands::parseCommandsFile();  
 
         }
-
-        commands::parseCommandsFile();
-
-        commands::getStatus(&gotStatus);
-
         
         sleep_until(t);
     }

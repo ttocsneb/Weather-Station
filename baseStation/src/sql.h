@@ -37,6 +37,13 @@ namespace mysql {
     bool minifyWeatherData(unsigned int age);
 
     /**
+     * Update the status table with the current status
+     * 
+     * @return true if successful
+     **/
+    bool updateStatus();
+
+    /**
      * Commit the changes to the SQL database
      * 
      * This should be called last after all other actions 
