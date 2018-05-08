@@ -8,6 +8,10 @@
 #include <stdexcept>
 #include <array>
 
+#ifndef _WIN32
+#include <systemd/sd-daemon.h>
+#endif
+
 
 #include "main.h"
 #include "radio.h"
@@ -61,7 +65,6 @@ void uploadWeather() {
     mysql::addWeatherData();
     mysql::minifyWeatherData(5);
     mysql::pruneWeatherData();
-    mysql::commit();
 
     //upload the data
     std::string output = global::exec("./upload");
@@ -84,13 +87,17 @@ int main(int argc, char** argv) {
 
 
     while(true) {
+        
+#ifndef _WIN32
+        sd_notify(0, "WATCHDOG=1");
+#endif
+
         time_point t = system_clock::now() + std::chrono::milliseconds(eeprom::refreshTime);
         if(radio::update(t)) {
             weather::update();
 
 
             commands::getStatus(&gotStatus);
-            mysql::updateStatus();
 
             uploadWeather();
 
@@ -98,7 +105,9 @@ int main(int argc, char** argv) {
             commands::parseCommandsFile();  
 
         }
+        mysql::updateStatus();
         
+        mysql::commit();
         sleep_until(t);
     }
 

@@ -11,7 +11,7 @@ SRCDIR = src
 ODIR=bin
 LIB_INC=-I/usr/local/include
 LIB=/usr/local/lib
-LIBS=-lrf24 -lwiringPi -lmariadbclient -lmysqlcppconn
+LIBS=-lrf24 -lwiringPi -lmariadbclient -lmysqlcppconn -lsystemd
 
 PROG_NAME=baseStation
 
