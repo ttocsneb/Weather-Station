@@ -18,6 +18,7 @@
 #define SOLARVOLTAGEPIN A1
 #define SOLARENABLEPIN 20
 #define BATTERY_POLL_TIME 5000
+#define BATTERY_CHARGE_TIME_RESET_THRESHOLD 3600*1000
 
 namespace main {
 
@@ -36,6 +37,8 @@ namespace main {
     float getBatteryVoltage();
 
     extern bool isCharging;
+    extern uint16_t chargeTime;
+    extern uint32_t uptime;
 
     void loadStatus(uint8_t* data);
     uint8_t getStatusSize();

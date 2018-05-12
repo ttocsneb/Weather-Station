@@ -33,8 +33,9 @@ void setup() {
 #endif
 
 
-    eeprom::setEEPROM();
     eeprom::loadEEPROM();
+    eeprom::resets += 1;
+    eeprom::setEEPROM();
 
 
     sensors::begin();
@@ -48,9 +49,30 @@ void setup() {
 int tick;
 
 bool main::isCharging = false;
+uint16_t main::chargeTime = 0;
+uint32_t main::uptime = 0;
 
 void loop() {
-    static long lastBatteryPoll(0);
+
+    //Calculate the uptime in seconds with a limit of 136 years before the int overflow
+    static unsigned long lastLoopTime(0);
+    static unsigned int uptimeSeconds(0);
+    uptimeSeconds += (millis() - lastLoopTime);
+    if(uptimeSeconds > 1000) {
+        if(lastLoopTime <= millis()) {
+            main::uptime += uptimeSeconds / 1000;
+
+            //add to chargeTime if charging
+            if(main::isCharging) {
+                main::chargeTime += uptimeSeconds / 1000;
+            }
+            
+            uptimeSeconds = uptimeSeconds % 1000;
+        } else {
+            uptimeSeconds = 0;
+        }
+    }
+    lastLoopTime = millis();
 
     sensors::update();
     radio::update();
@@ -65,6 +87,8 @@ void loop() {
         DEBUG_PRINTLN(main::getSolarVoltage(), 5);
     }
 
+    static unsigned long lastChargeTime(0);
+    static unsigned long lastBatteryPoll(0);
     if(millis() - lastBatteryPoll > BATTERY_POLL_TIME) {
         lastBatteryPoll = millis();
         float charge = main::getSolarVoltage();
@@ -78,9 +102,15 @@ void loop() {
                 digitalWrite(SOLARENABLEPIN, LOW);
             } else {
                 charge = true;
+                //Reset the charge time if the time after stopping charge 
+                //is greater than the threshold
+                if(millis() - lastChargeTime > BATTERY_CHARGE_TIME_RESET_THRESHOLD) {
+                    main::chargeTime = 0;
+                }
             }
         } else if(main::isCharging && charge < 2.5) {
             charge = false;
+            lastChargeTime = millis();
             digitalWrite(SOLARENABLEPIN, LOW);
         }
 
@@ -143,16 +173,18 @@ float main::getBatteryVoltage() {
 #define IS_CHARGING_LOCBIN 0
 #define BATTERY_LOC 5
 #define RESETS_LOC 6
+#define UPTIME_LOC 7
 
 //location of last item plus its size
-#define STATUS_SIZE RESETS_LOC + 1
+#define STATUS_SIZE UPTIME_LOC + 4
 
 void main::loadStatus(uint8_t* data) {
     set16(data + LOSTPACKETS_LOC, radio::lostPackets);
-    //TODO: set CHARGING_TIME
+    set16(data + CHARGING_TIME_LOC, chargeTime);
     setB(data + IS_CHARGING_LOC, IS_CHARGING_LOCBIN, isCharging);
     set8(data + BATTERY_LOC, static_cast<uint8_t>(getBatteryVoltage()*50));
     set8(data + RESETS_LOC, eeprom::resets);
+    set32(data + UPTIME_LOC, uptime);
 }
 
 uint8_t main::getStatusSize() {
