@@ -27,31 +27,32 @@ using std::endl;
 void gotEEProm(EEPROM_Variable var) {
     switch(var) {
     case ALIAS_WIND_TICK:
-        cout << date() << "Got Wind Tick: " << commands::station::wind::ticks << endl;
+        cout << "Got Wind Tick: " << commands::station::wind::ticks << endl;
         return;
     case ALIAS_WIND_READ_TIME:
-        cout << date() << "Got Wind Readtime: " << commands::station::wind::readTime << endl;
+        cout << "Got Wind Readtime: " << commands::station::wind::readTime << endl;
         return;
     case ALIAS_WIND_AVG_UPDATE_TIME:
-        cout << date() << "Got Wind average Updatetime: " << commands::station::wind::averageUpdateTime << endl;
+        cout << "Got Wind average Updatetime: " << commands::station::wind::averageUpdateTime << endl;
         return;
     case ALIAS_WIND_AVG_STORAGE_TIME:
-        cout << date() << "Got Wind average Storagetime: " << commands::station::wind::averageStorageTime << endl;
+        cout << "Got Wind average Storagetime: " << commands::station::wind::averageStorageTime << endl;
         return;
     case ALIAS_PRES_ALTITUDE:
-        cout << date() << "Got Pressure Altitude: " << commands::station::pressure::altitude << endl;
+        cout << "Got Pressure Altitude: " << commands::station::pressure::altitude << endl;
         return;
     case ALIAS_REFRESH_TIME:
-        cout << date() << "Got Refresh Time: " << commands::station::refreshTime << endl;
+        cout << "Got Refresh Time: " << commands::station::refreshTime << endl;
     }
 }
 
 void gotStatus() {
-    cout << date() << "Got Status: " << endl;
+    cout << "Got Status: " << endl;
     cout << "Battery: " << commands::status::batteryVoltage << endl;
     cout << "Charging: " << (commands::status::isCharging ? "Yes" : "No") << endl;
     cout << "Lost Packets: " << commands::status::lostPackets << endl;
     cout << "Resets: " << commands::status::numResets << endl;
+    mysql::updateStatus();
 }
 
 /**
@@ -60,7 +61,7 @@ void gotStatus() {
  * Also add a weather.data item to the SQL Server
  */
 void uploadWeather() {
-    cout << date() << "Uploading WeatherData:" << endl;
+    cout << "Uploading WeatherData:" << endl;
 
     mysql::addWeatherData();
     mysql::minifyWeatherData(5);
@@ -70,20 +71,26 @@ void uploadWeather() {
     std::string output = global::exec("./upload");
 
     cout << output << std::flush;
-    cout << date() << "done" << endl;
+    cout << "done" << endl;
 }
 
 int main(int argc, char** argv) {
+    std::chrono::system_clock::time_point startupTime = system_clock::now();
+
     wiringPiSetup();
 
     global::begin();
 
     eeprom::loadEEPROM();
+    eeprom::resets++;
+    commands::status::base::resets = eeprom::resets;
     eeprom::setEEPROM();
 
     weather::begin();
 
     radio::begin();
+
+    commands::getStatus(&gotStatus);
 
 
     while(true) {
@@ -92,20 +99,39 @@ int main(int argc, char** argv) {
         sd_notify(0, "WATCHDOG=1");
 #endif
 
+        //Set the status uptime to seconds since the program started
+        commands::status::base::uptime = std::chrono::duration_cast<std::chrono::seconds>(system_clock::now() - startupTime).count();
+
+        static bool lastState(false);
+        bool currentState = false;
+
         time_point t = system_clock::now() + std::chrono::milliseconds(eeprom::refreshTime);
         if(radio::update(t)) {
             weather::update();
 
-
-            commands::getStatus(&gotStatus);
+            //update the status once every 5 minutes
+            static time_point lastStatusTime(0s);
+            if(timeDiff(lastStatusTime, system_clock::now()) > 5*60*1000) {
+                lastStatusTime = system_clock::now();
+                commands::getStatus(&gotStatus);
+            }
 
             uploadWeather();
 
             
-            commands::parseCommandsFile();  
+            commands::getMysqlCommands();
 
+            currentState = true;
         }
-        mysql::updateStatus();
+
+        cout << "-----------Update Status-----------" << currentState << " last: " << lastState << endl;
+        //If the weather station just started or stopped reporting, update
+        //the status to reflect that
+        if(lastState != currentState) {
+            lastState = currentState;
+            commands::status::isReporting = currentState;
+            mysql::updateStatus();
+        }
         
         mysql::commit();
         sleep_until(t);
@@ -156,17 +182,6 @@ std::string global::getsqlDate(std::chrono::system_clock::time_point t) {
     struct std::tm * ptm = std::localtime(&tt);
 
     ss << std::put_time(ptm, "%Y-%m-%d %H:%M:%S");
-    return ss.str();
-}
-
-std::string date() {
-    std::stringstream ss;
-
-    time_t tt = system_clock::to_time_t(system_clock::now());
-
-    struct std::tm * ptm = std::localtime(&tt);
-
-    ss << "[" << std::put_time(ptm, "%c") << "] ";
     return ss.str();
 }
 

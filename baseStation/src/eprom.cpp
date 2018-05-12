@@ -22,6 +22,8 @@ std::string removeColons(std::string str) {
 uint32_t eeprom::refreshTime = 30000;
 uint32_t eeprom::listenTime = 2000;
 
+uint16_t eeprom::resets = 0;
+
 float eeprom::weather::windConversion = 1.0;
 unsigned int eeprom::weather::dailyRain = 0;
 
@@ -47,7 +49,7 @@ void set_value(std::ostream& os, std::string token, T value) {
 }
 
 void eeprom::loadEEPROM() {
-    cout << date() << "Loading EEPROM" << endl;
+    cout << "Loading EEPROM" << endl;
 
     std::ifstream in(EEPROM_FILE);
 
@@ -71,14 +73,16 @@ void eeprom::loadEEPROM() {
             continue;
         if(get_value(in, line, value(sql::weatherData_storageTime)))
             continue;
+        if(get_value(in, line, value(resets)))
+            continue;
         
     }
 
-    cout << date() << "done" << endl;
+    cout << "done" << endl;
 }
 
 void eeprom::setEEPROM() {
-    cout << date() << "Setting EEPROM" << endl;
+    cout << "Setting EEPROM" << endl;
 
     std::ofstream out(EEPROM_FILE);
 
@@ -93,10 +97,11 @@ void eeprom::setEEPROM() {
     set_value(out, value(weather::windConversion));
     set_value(out, value(weather::dailyRain));
     set_value(out, value(sql::weatherData_storageTime));
+    set_value(out, value(resets));
 
-    cout << date() << "done" << endl;
+    cout << "done" << endl;
 }
 
 void eeprom::syncEEPROM() {
-    cout << date() << "eeprom::syncEEPROM() not implemented" << endl;
+    cout << "eeprom::syncEEPROM() not implemented" << endl;
 }

@@ -100,19 +100,32 @@
                                 <div class="alert alert-danger" id="station-not-reporting"><strong>Not Reporting</strong></div>
                             </div>
                         </div>
+                        
+                        <h5>Base Station</h5>
+                        <hr>
+                        <div class="row">
+                            <div class="col-lg-4 col-sm-6">
+                                <p>Battery: <span id="station-battery"></span> V</p>
+                                <p>Charging: <span id="station-isCharging"></span></p>
+                                <p>Time Spent Charging: <span id="station-chargeTime"></span> hours</p>
+                            </div>
+                            <div class="col-lg-4 col-sm-6">
+                                <p>Uptime: <span id="station-uptime"></span></p>
+                                <p>Lost Packets: <span id="station-lostPackets"></span></p>
+                                <p>Number of resets: <span id="station-resets"></span> </p>
+                            </div>
+                        </div>
+        
+                        <h5>Base Station</h5>
+                        <hr>
                         <div class="row">
                             <div class="col-sm-3">
-                                <p>Battery: <span id="station-battery">X</span> V</p>
-                                <p>Charging: <span id="station-isCharging">(Yes/No)</span></p>
-                                <p>Time Spent Charging: <span id="station-chargeTime">X</span> hours</p>
-                            </div>
-                            <div class="col-sm-3">
-                                <p>Lost Packets: <span id="station-lostPackets">X</span></p>
-                                <p>Number of resets: <span id="station-resets">X</span> </p>
+                                <p>Uptime: <span id="base-uptime"></span></p>
+                                <p>Resets: <span id="base-resets"></span></p>
                             </div>
                         </div>
                     </div>
-                    <div class="card-footer small text-muted">Updated <span id="station-update-time">([today, yesterday, X days ago], at h:m)</span></div>
+                    <div class="card-footer small text-muted">Updated <span id="station-update-time">Never</span></div>
                 </div>
                 
                 

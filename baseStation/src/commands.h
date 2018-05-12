@@ -70,6 +70,11 @@ namespace commands {
         extern uint8_t numResets;
         extern uint32_t uptime;
         extern bool isReporting;
+
+        namespace base {
+            extern uint32_t uptime;
+            extern uint16_t resets;
+        }
     }
 
     /**
@@ -143,9 +148,9 @@ namespace commands {
     void getReply(const uint8_t* packet, uint8_t size);
 
     /**
-     * Parse the commands file .commands and execute them
+     * Get the commands from the mysql commands table, and execute them
      */
-    void parseCommandsFile();
+    void getMysqlCommands();
 }
 
 #endif

@@ -30,6 +30,9 @@ uint8_t commands::status::numResets;
 uint32_t commands::status::uptime;
 bool commands::status::isReporting;
 
+uint32_t commands::status::base::uptime;
+uint16_t commands::status::base::resets;
+
 //==================== Command Queue ====================
 
 struct Command {
@@ -173,15 +176,17 @@ uint8_t readStatus(const uint8_t* data) {
     const uint8_t IS_CHARGING_LOCBIN = 0;
     const uint8_t BATTERY_LOC = 5;
     const uint8_t RESETS_LOC = 6;
+    const uint8_t UPTIME_LOC = 7;
 
     //location of last item plus its size
-    const uint8_t STATUS_SIZE = RESETS_LOC + 1;
+    const uint8_t STATUS_SIZE = UPTIME_LOC + 4;
 
     commands::status::lostPackets = global::get<uint16_t>(data + LOSTPACKETS_LOC);
     commands::status::chargingTime = global::get<uint16_t>(data + CHARGING_TIME_LOC);
     commands::status::isCharging = global::getBool(data + IS_CHARGING_LOC, IS_CHARGING_LOCBIN);
     commands::status::batteryVoltage = global::get<uint8_t>(data + BATTERY_LOC) / 50.0;
     commands::status::numResets = global::get<uint8_t>(data + RESETS_LOC);
+    commands::status::uptime = global::get<uint32_t>(data + UPTIME_LOC);
 
     if(statusSuccess) {
         (*statusSuccess)();
@@ -196,7 +201,7 @@ bool commands::loadCommands(uint8_t* packet, uint8_t size) {
     bool expectResponse = false;
     Command com = qCommands.front();
 
-    cout << date() << "Sending commands to Station:" << endl;
+    cout << "Sending commands to Station:" << endl;
 
     while(!qCommands.empty() && i + com.size < size) {
 
@@ -313,7 +318,7 @@ bool checkLoadEeprom(std::istream& is, char command) {
     return false;
 }
 
-void commands::parseCommandsFile() {
+void commands::getMysqlCommands() {
 
 
     std::string strings = "";
@@ -322,7 +327,7 @@ void commands::parseCommandsFile() {
         return;
     }
 
-    cout << date() << "Parsing Commands" << endl;
+    cout << "Parsing Commands" << endl;
 
     std::stringstream in(strings);
 

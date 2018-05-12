@@ -39,7 +39,7 @@ void weather::begin() {
 }
 
 void weather::update() {
-    cout << date() << "> Calculating weatherData" << endl;
+    cout << "> Calculating weatherData" << endl;
 
     //wind
     windSpeed = radio::rawWindSpeed * eeprom::weather::windConversion;
@@ -116,5 +116,5 @@ void weather::update() {
 
     cout << "rain Day: " << rainDay << endl;
 
-    cout << date() << "> Weather Calculated" << endl;
+    cout << "> Weather Calculated" << endl;
 }

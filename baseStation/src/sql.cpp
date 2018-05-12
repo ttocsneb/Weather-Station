@@ -44,7 +44,7 @@ int executefoo(sql::Statement* stmt, std::string command) {
 }
 
 void printSQLError(sql::SQLException &e) {
-    cerr << date() << "SQL Error: " << e.what();
+    cerr << "SQL Error: " << e.what();
     cerr << " (MySQL error code: " << e.getErrorCode();
     cerr << ", SQLState: " << e.getSQLState() << ")" << endl;
 }
@@ -87,7 +87,7 @@ bool mysql::addWeatherData() {
         return false;
     }
 
-    cout << date() << "Adding WeatherData to SQL" << endl;
+    cout << "Adding WeatherData to SQL" << endl;
 
     //Generate the SQL command
     std::stringstream ss;
@@ -134,7 +134,7 @@ bool mysql::pruneWeatherData() {
         return false;
     }
     
-    cout << date() << "Pruning SQL Weather Data" << endl;
+    cout << "Pruning SQL Weather Data" << endl;
 
     //delete all entries from data where the date 
     //is older than eeprom::sql::weatherData_storageTime hours
@@ -218,7 +218,7 @@ bool mysql::minifyWeatherData(unsigned int age) {
             return true;
         }
 
-        cout << date() << "Minifying Weather Data: " << endl;
+        cout << "Minifying Weather Data: " << endl;
         
         execute(stmt, ADD_AVERAGE);
         execute(stmt, REMOVE_ROWS);
@@ -239,7 +239,7 @@ bool mysql::updateStatus() {
         return false;
     }
 
-    cout << date() << "Updating SQL Status" << endl;
+    cout << "Updating SQL Status" << endl;
 
     const std::string SET_STATUS = 
         "UPDATE status "
@@ -250,7 +250,9 @@ bool mysql::updateStatus() {
                 "uptime=?, "
                 "resets=?, "
                 "lost_packets=?, "
-                "reporting=?";
+                "reporting=?, "
+                "base_uptime=?, "
+                "base_resets=?";
 
     try {
 
@@ -258,11 +260,13 @@ bool mysql::updateStatus() {
 
         stmt->setDouble(1, commands::status::batteryVoltage);
         stmt->setBoolean(2, commands::status::isCharging);
-        stmt->setInt(3, commands::status::chargingTime);
-        stmt->setInt(4, commands::status::uptime);
-        stmt->setInt(5, commands::status::numResets);
-        stmt->setInt(6, commands::status::lostPackets);
+        stmt->setUInt(3, commands::status::chargingTime);
+        stmt->setUInt(4, commands::status::uptime);
+        stmt->setUInt(5, commands::status::numResets);
+        stmt->setUInt(6, commands::status::lostPackets);
         stmt->setBoolean(7, commands::status::isReporting);
+        stmt->setUInt(8, commands::status::base::uptime);
+        stmt->setUInt(9, commands::status::base::resets);
 
         stmt->execute();
         sendStatement(SET_STATUS);
@@ -285,7 +289,7 @@ bool mysql::getCommands(std::string &commands) {
         return false;
     }
 
-    cout << date() << "Collecting Commands from SQL" << endl;
+    cout << "Collecting Commands from SQL" << endl;
 
     try {
         sql::Statement *statement = connect->createStatement();
