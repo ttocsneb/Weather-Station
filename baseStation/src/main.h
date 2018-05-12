@@ -15,7 +15,6 @@ typedef std::chrono::time_point<std::chrono::system_clock> time_point;
 typedef std::chrono::high_resolution_clock Clock;
 
 #include <string>
-std::string date();
 #define timeDiff(t1, t2) std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count()
 
 namespace global {

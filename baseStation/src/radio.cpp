@@ -35,7 +35,7 @@ uint16_t radio::rawPressure;
 
 void radio::begin() {
     global::light(true);
-    cout << date() << "> Begin Radio" << endl;
+    cout << "> Begin Radio" << endl;
 
     rad.begin();
 
@@ -51,15 +51,15 @@ void radio::begin() {
 
     rad.printDetails();
 
-    cout << date() << "< Begin Radio Complete" << endl;
+    cout << "< Begin Radio Complete" << endl;
     global::light(false);
 }
 
 bool checkForPacket() {
-    cout << date() << "Checking for Packet" << endl;
+    cout << "Checking for Packet" << endl;
     if(active) {
         if(rad.available()) {
-            cout << date() << "Packet received" << endl;
+            cout << "Packet received" << endl;
             uint8_t data[PACKET_SIZE];
 
             rad.read(data, PACKET_SIZE);
@@ -94,7 +94,7 @@ bool sendPackets() {
     bool expectResponse = commands::loadCommands(packets, PACKET_SIZE);
 
     if(!rad.write(packets, PACKET_SIZE)) {
-        cout << date() << "ERROR: Could not send Commands" << endl;
+        cout << "ERROR: Could not send Commands" << endl;
     }
 
     return expectResponse;
@@ -103,11 +103,11 @@ bool sendPackets() {
 void sendCommands() {
     rad.stopListening();
     if(sendPackets()) {
-        cout << date() << "Expecting Reply" << endl;
+        cout << "Expecting Reply" << endl;
         rad.startListening();
         sleep_for(500ms);
         if(!rad.available()) {
-            cout << date() << "ERROR: Reply didn't come" << endl;
+            cout << "ERROR: Reply didn't come" << endl;
         }
         while(rad.available()) {
             uint8_t data[PACKET_SIZE];
@@ -125,7 +125,7 @@ bool radio::update(time_point &reloadTime) {
 
     global::light(true);
 
-    cout << date() << "> Waiting for transmission" << endl;
+    cout << "> Waiting for transmission" << endl;
 
     active = true;
     rad.powerUp();
@@ -133,7 +133,7 @@ bool radio::update(time_point &reloadTime) {
 
     //check if the timer is out of sync with the station
     if(lost_packets > 1) {
-        cout << date() << "Too many lost packets, possible sync error.  Resyncing" << endl;
+        cout << "Too many lost packets, possible sync error.  Resyncing" << endl;
 
         lost_packets = 0;
 
@@ -153,7 +153,7 @@ bool radio::update(time_point &reloadTime) {
 
         //if a packet was received, wait until the next update time.
         if(successfull) {
-            cout << date() << "Packet received, waiting " << (eeprom::refreshTime - eeprom::listenTime / 2) / 1000.0 << " seconds to sync with the station" << endl;
+            cout << "Packet received, waiting " << (eeprom::refreshTime - eeprom::listenTime / 2) / 1000.0 << " seconds to sync with the station" << endl;
             reloadTime += (Clock::now() - t) - std::chrono::milliseconds(eeprom::listenTime / 2);
 
             //((refresh time - listentime) / 2) - (refresh time - (now - t))
@@ -180,7 +180,7 @@ bool radio::update(time_point &reloadTime) {
         }
     }
 
-    cout << date() << "< " << (successfull ? "Transmission Received" : "No Transmission available") << endl;
+    cout << "< " << (successfull ? "Transmission Received" : "No Transmission available") << endl;
 
     rad.stopListening();
     rad.powerDown();

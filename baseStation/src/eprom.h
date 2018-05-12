@@ -9,6 +9,8 @@ namespace eeprom {
     extern uint32_t refreshTime;
     extern uint32_t listenTime;
 
+    extern uint16_t resets;
+
     namespace weather {
 
         extern float windConversion;
