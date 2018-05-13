@@ -21,6 +21,8 @@ class Status {
     public $resets = 0;
     public $lost_packets = 0;
     public $reporting = false;
+    public $base_uptime = 0;
+    public $base_resets = 0;
 }
 
 $data = new Status();
@@ -38,6 +40,8 @@ if($result->num_rows > 0) {
     $data->resets = $row["resets"];
     $data->lost_packets = $row["lost_packets"];
     $data->reporting = (bool)$row["reporting"];
+    $data->base_uptime = $row["base_uptime"];
+    $data->base_resets = $row["base_resets"];
     
     #Calculate the string to display for the last updated time in the format
     # [today/yesterday/X days ago], at h:m [am:pm]

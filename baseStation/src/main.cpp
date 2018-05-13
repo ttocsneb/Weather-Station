@@ -131,6 +131,7 @@ int main(int argc, char** argv) {
             lastState = currentState;
             commands::status::isReporting = currentState;
             mysql::updateStatus();
+            commands::getStatus(&gotStatus);
         }
         
         mysql::commit();
