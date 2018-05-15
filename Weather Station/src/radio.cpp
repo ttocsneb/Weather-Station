@@ -188,15 +188,20 @@ void radio::update() {
                 uint8_t i = 0;
                 while(data[i] != EOT && i < PACKET_SIZE) {
                     if(data[i] == COMMAND_SET_VALUE) {
+                        DEBUG_PRINTLN("Got Command Set Value");
                         i += setValue(data + i + 1);
                     } else if(data[i] == COMMAND_SET_EEPROM) {
+                        DEBUG_PRINTLN("Got Command Set EEPROM");
                         eeprom::setEEPROM();
                     } else if(data[i] == COMMAND_LOAD_EEPROM) {
+                        DEBUG_PRINTLN("Got Command Load EEPROM");
                         eeprom::loadEEPROM();
                     } else if(data[i] == COMMAND_GET_VALUE) {
+                        DEBUG_PRINTLN("Got Command Get Value");
                         getValue(data + i);
                         i++;
                     } else if(data[i] == COMMAND_GET_STATUS) {
+                        DEBUG_PRINTLN("Got Command Get Status");
                         Command c;
                         c.size = main::getStatusSize() + 1;
                         c.command = new uint8_t[c.size];
@@ -204,7 +209,8 @@ void radio::update() {
                         main::loadStatus(c.command + 1);
                         commands.push(c);
                     } else if(data[i] == COMMAND_RESET) {
-                        //TODO reset
+                        DEBUG_PRINTLN("Got Command Reset");
+                        main::reset();
                     }
                     i++;
                 }

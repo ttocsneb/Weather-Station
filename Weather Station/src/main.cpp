@@ -4,6 +4,8 @@
 
 #include "eprom.h"
 
+#include <avr/wdt.h>
+
 void setupInputs() {
 
     pinMode(LED, OUTPUT);
@@ -18,8 +20,11 @@ void setupInputs() {
 
 }
 
+bool resetChip = false;
+
 void setup() {
     //Disable the watchdog
+    resetChip = false;
     wdt_disable();
 
 
@@ -30,7 +35,10 @@ void setup() {
     DEBUG_BEGIN(115200);
 #ifdef DEBUG
     delay(3000);
+#else
+    delay(500);
 #endif
+
 
 
     eeprom::loadEEPROM();
@@ -44,9 +52,10 @@ void setup() {
 
 
     digitalWrite(LED, LOW);
-}
 
-int tick;
+    //enable the watchdog to reset after 2 seconds of inactivity
+    wdt_enable(WDTO_2S);
+}
 
 bool main::isCharging = false;
 uint16_t main::chargeTime = 0;
@@ -62,6 +71,9 @@ void loop() {
         if(lastLoopTime <= millis()) {
             main::uptime += uptimeSeconds / 1000;
 
+            DEBUG_PRINT("Uptime: ");
+            DEBUG_PRINTLN(main::uptime);
+
             //add to chargeTime if charging
             if(main::isCharging) {
                 main::chargeTime += uptimeSeconds / 1000;
@@ -71,21 +83,18 @@ void loop() {
         } else {
             uptimeSeconds = 0;
         }
+
+        //Reset the watchdog once every second
+        if(!resetChip) {
+            DEBUG_PRINTLN("Reset Watchdog timer");
+            wdt_reset();
+        }
+
     }
     lastLoopTime = millis();
 
     sensors::update();
     radio::update();
-    tick++;
-
-    if(tick == 300) {
-        DEBUG_PRINT("lostPackets: ");
-        DEBUG_PRINTLN(radio::lostPackets);
-        tick = 0;
-
-        DEBUG_PRINT("SOLAR VOLTAGE:");
-        DEBUG_PRINTLN(main::getSolarVoltage(), 5);
-    }
 
     static unsigned long lastChargeTime(0);
     static unsigned long lastBatteryPoll(0);
@@ -119,6 +128,10 @@ void loop() {
     }
 
     delay(1);
+}
+
+void main::reset() {
+    resetChip = true;
 }
 
 void main::setB(uint8_t* index, uint8_t location, bool val) {
