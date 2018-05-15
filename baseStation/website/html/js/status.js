@@ -27,7 +27,7 @@ function getTime(seconds) {
 
     if(seconds > day) {
         var d = Math.floor(seconds / day) % (year / day);
-        str += y;
+        str += d;
         str += (d == 1 ? " day " : " days ");
     }
 

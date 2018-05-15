@@ -162,11 +162,21 @@ bool radio::update(time_point &reloadTime) {
         return false;
     } else {
 
+        int8_t count = 0;
+
         //wait for an available packet
         time_point t = Clock::now();
         while(!successfull && timeDiff(t,  Clock::now()) < eeprom::listenTime) {
             sleep_for(500ms);
             successfull = checkForPacket();
+            count++;
+        }
+
+        //If we are desyncing, compensate.
+        count -= (eeprom::listenTime / 500) / 2;
+        if(count != 0) {
+            reloadTime += (count * 500ms);
+            cout << "Desyncing by " << count * 500 << "ms, adjusting" << endl;
         }
 
         //if successful, try to send the commands
