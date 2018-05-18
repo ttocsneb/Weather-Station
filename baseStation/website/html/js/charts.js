@@ -8,6 +8,15 @@ var tempChart = new Chart(tempElement, {
     data: {
         datasets: [
             {
+                label: 'Dewpoint',
+                borderColor: '#ff9d00',
+                pointBackgroundColor: '#ff9d00',
+                backgroundColor: 'rgba(255,157,0,0.3)',
+                fill: false,
+                yAxisID: 'temp',
+                data: []
+            },
+            {
                 label: 'Humidity',
                 borderColor: '#0099ff',
                 pointBackgroundColor: '#0099ff',
@@ -20,7 +29,6 @@ var tempChart = new Chart(tempElement, {
                 borderColor: '#ff1e00',
                 pointBackgroundColor: '#ff1e00',
                 backgroundColor: 'rgba(255,30,0,0.3)',
-                
                 yAxisID: 'temp',
                 data: []
             }
@@ -217,6 +225,7 @@ var windChart = new Chart(windElement, {
                     type: 'linear',
                     position: 'left',
                     ticks: {
+                        min: 0,
                         maxTicksLimit: 5
                     }
                 },
@@ -262,16 +271,22 @@ var minRange = [
 function addRow(row) {
     
     //Humidity
-    tempChart.data.datasets[0].data.push({
+    tempChart.data.datasets[1].data.push({
         x: row.date,
         y: row.humidity
     });
 
     //Temperature
-    tempChart.data.datasets[1].data.push({
+    tempChart.data.datasets[2].data.push({
         x: row.date,
         y: row.temperature
     });
+    
+    //Dewpoint
+    tempChart.data.datasets[0].data.push({
+        x: row.date,
+        y: row.dewpoint
+    })
 
     //Rain
     rainChart.data.datasets[0].data.push({
