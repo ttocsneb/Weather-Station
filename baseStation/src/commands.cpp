@@ -201,7 +201,7 @@ bool commands::loadCommands(uint8_t* packet, uint8_t size) {
     bool expectResponse = false;
     Command com = qCommands.front();
 
-    cout << "Sending commands to Station:" << endl;
+    D(cout << "Sending commands to Station:" << endl);
 
     while(!qCommands.empty() && i + com.size < size) {
 
@@ -267,7 +267,7 @@ bool checkCommandSet(std::istream& is, char command) {
         is >> variable;
         is >> value;
 
-        cout << "Sending Command: SetEEPROM " << variable << " -> " << value << endl;
+        D(cout << "Sending Command: SetEEPROM " << variable << " -> " << value << endl);
 
         //send the command
         switch(GET(variable)) {
@@ -297,7 +297,7 @@ bool checkSaveEeprom(std::istream& is, char command) {
     if(command == COMMAND_SET_EEPROM) {
         commands::saveEEPROM();
 
-        cout << "Sending Command: SaveEEPROM" << endl;
+        D(cout << "Sending Command: SaveEEPROM" << endl);
 
         return true;
     }
@@ -310,7 +310,7 @@ bool checkLoadEeprom(std::istream& is, char command) {
     if(command == COMMAND_LOAD_EEPROM) {
         commands::loadEEPROM();
 
-        cout << "Sending Command: LoadEEPROM" << endl;
+        D(cout << "Sending Command: LoadEEPROM" << endl);
 
         return true;
     }
@@ -327,7 +327,7 @@ void commands::getMysqlCommands() {
         return;
     }
 
-    cout << "Parsing Commands" << endl;
+    D(cout << "Parsing Commands" << endl);
 
     std::stringstream in(strings);
 

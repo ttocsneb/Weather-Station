@@ -61,7 +61,7 @@ void gotStatus() {
  * Also add a weather.data item to the SQL Server
  */
 void uploadWeather() {
-    cout << "Uploading WeatherData:" << endl;
+    D(cout << "Uploading WeatherData:" << endl);
 
     mysql::addWeatherData();
     mysql::minifyWeatherData(5);
@@ -70,8 +70,8 @@ void uploadWeather() {
     //upload the data
     std::string output = global::exec("./upload");
 
-    cout << output << std::flush;
-    cout << "done" << endl;
+    D(cout << output << std::flush);
+    D(cout << "done" << endl);
 }
 
 int main(int argc, char** argv) {
@@ -124,7 +124,6 @@ int main(int argc, char** argv) {
             currentState = true;
         }
 
-        cout << "-----------Update Status-----------" << currentState << " last: " << lastState << endl;
         //If the weather station just started or stopped reporting, update
         //the status to reflect that
         if(lastState != currentState) {

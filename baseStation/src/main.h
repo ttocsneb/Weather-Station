@@ -1,6 +1,8 @@
 #ifndef MAIN
 #define MAIN
 
+//#define DEBUG
+
 #include <stdint.h>
 
 //Enable sleep_for(), sleep_until() commands
@@ -16,6 +18,12 @@ typedef std::chrono::high_resolution_clock Clock;
 
 #include <string>
 #define timeDiff(t1, t2) std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count()
+
+#ifdef DEBUG
+#define D(x) x
+#else
+#define D(x)
+#endif
 
 namespace global {
     /**

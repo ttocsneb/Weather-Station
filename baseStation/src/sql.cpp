@@ -21,9 +21,13 @@ using std::endl;
 
 sql::Connection* connect = NULL;
 
+#ifdef DEBUG
 void sendStatement(std::string command) {
     cout << "Sent SQL Command:" << endl << command << endl;
 }
+#else
+#define sendStatement(x)
+#endif
 
 bool execute(sql::Statement* stmt, std::string command) {
     bool ret = stmt->execute(command);
@@ -87,7 +91,7 @@ bool mysql::addWeatherData() {
         return false;
     }
 
-    cout << "Adding WeatherData to SQL" << endl;
+    D(cout << "Adding WeatherData to SQL" << endl);
 
     //Generate the SQL command
     std::stringstream ss;
@@ -134,7 +138,7 @@ bool mysql::pruneWeatherData() {
         return false;
     }
     
-    cout << "Pruning SQL Weather Data" << endl;
+    D(cout << "Pruning SQL Weather Data" << endl);
 
     //delete all entries from data where the date 
     //is older than eeprom::sql::weatherData_storageTime hours
@@ -218,7 +222,7 @@ bool mysql::minifyWeatherData(unsigned int age) {
             return true;
         }
 
-        cout << "Minifying Weather Data: " << endl;
+        D(cout << "Minifying Weather Data: " << endl);
         
         execute(stmt, ADD_AVERAGE);
         execute(stmt, REMOVE_ROWS);
@@ -239,7 +243,7 @@ bool mysql::updateStatus() {
         return false;
     }
 
-    cout << "Updating SQL Status" << endl;
+    D(cout << "Updating SQL Status" << endl);
 
     const std::string SET_STATUS = 
         "UPDATE status "
@@ -289,7 +293,7 @@ bool mysql::getCommands(std::string &commands) {
         return false;
     }
 
-    cout << "Collecting Commands from SQL" << endl;
+    D(cout << "Collecting Commands from SQL" << endl);
 
     try {
         sql::Statement *statement = connect->createStatement();
@@ -298,16 +302,16 @@ bool mysql::getCommands(std::string &commands) {
         //Get the commands
         result = executeQuery(statement, "SELECT * FROM commands");
         if(!result->next()) {
-            cout << "Found no commands" << endl;
+            D(cout << "Found no commands" << endl);
             return false;
         }
 
-        cout << "Got Commands:" << endl;
+        D(cout << "Got Commands:" << endl);
 
         //Read the commands into the commands variable
         do {
             commands = commands + result->getString("command") + "\n";
-            cout << "#" << result->getInt("id") << ": " << result->getString("command") << endl;
+            D(cout << "#" << result->getInt("id") << ": " << result->getString("command") << endl);
         } while(result->next());
 
         //remove the read commands

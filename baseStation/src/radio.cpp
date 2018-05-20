@@ -8,8 +8,9 @@
 #include <algorithm>
 #include <RF24/RF24.h>
 
-using std::cout;
+using std::cout; 
 using std::endl;
+using std::cerr;
 
 const uint8_t STATION_ADDRESS[6] = "WTRst";
 const uint8_t BASE_ADDRESS[6] = "WTRbs";
@@ -56,10 +57,10 @@ void radio::begin() {
 }
 
 bool checkForPacket() {
-    cout << "Checking for Packet" << endl;
+    D(cout << "Checking for Packet" << endl);
     if(active) {
         if(rad.available()) {
-            cout << "Packet received" << endl;
+            D(cout << "Packet received" << endl);
             uint8_t data[PACKET_SIZE];
 
             rad.read(data, PACKET_SIZE);
@@ -94,7 +95,7 @@ bool sendPackets() {
     bool expectResponse = commands::loadCommands(packets, PACKET_SIZE);
 
     if(!rad.write(packets, PACKET_SIZE)) {
-        cout << "ERROR: Could not send Commands" << endl;
+        cerr << "ERROR: Could not send Commands" << endl;
     }
 
     return expectResponse;
@@ -103,11 +104,11 @@ bool sendPackets() {
 void sendCommands() {
     rad.stopListening();
     if(sendPackets()) {
-        cout << "Expecting Reply" << endl;
+        D(cout << "Expecting Reply" << endl);
         rad.startListening();
         sleep_for(500ms);
         if(!rad.available()) {
-            cout << "ERROR: Reply didn't come" << endl;
+            D(cout << "ERROR: Reply didn't come" << endl);
         }
         while(rad.available()) {
             uint8_t data[PACKET_SIZE];
@@ -125,7 +126,7 @@ bool radio::update(time_point &reloadTime) {
 
     global::light(true);
 
-    cout << "> Waiting for transmission" << endl;
+    D(cout << "> Waiting for transmission" << endl);
 
     active = true;
     rad.powerUp();
@@ -153,7 +154,7 @@ bool radio::update(time_point &reloadTime) {
 
         //if a packet was received, wait until the next update time.
         if(successfull) {
-            cout << "Packet received, waiting " << (eeprom::refreshTime - eeprom::listenTime / 2) / 1000.0 << " seconds to sync with the station" << endl;
+            D(cout << "Packet received, waiting " << (eeprom::refreshTime - eeprom::listenTime / 2) / 1000.0 << " seconds to sync with the station" << endl);
             reloadTime += (Clock::now() - t) - std::chrono::milliseconds(eeprom::listenTime / 2);
 
             //((refresh time - listentime) / 2) - (refresh time - (now - t))
@@ -176,7 +177,7 @@ bool radio::update(time_point &reloadTime) {
         count -= (eeprom::listenTime / 500) / 2;
         if(count != 0) {
             reloadTime += (count * 500ms);
-            cout << "Desyncing by " << count * 500 << "ms, adjusting" << endl;
+            cout << "Desynced by " << count * 500 << "ms, adjusting" << endl;
         }
 
         //if successful, try to send the commands
@@ -190,7 +191,7 @@ bool radio::update(time_point &reloadTime) {
         }
     }
 
-    cout << "< " << (successfull ? "Transmission Received" : "No Transmission available") << endl;
+    D(cout << "< " << (successfull ? "Transmission Received" : "No Transmission available") << endl);
 
     rad.stopListening();
     rad.powerDown();

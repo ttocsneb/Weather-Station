@@ -39,7 +39,7 @@ void weather::begin() {
 }
 
 void weather::update() {
-    cout << "> Calculating weatherData" << endl;
+    D(cout << "> Calculating weatherData" << endl);
 
     //wind
     windSpeed = radio::rawWindSpeed * eeprom::weather::windConversion;
@@ -52,7 +52,7 @@ void weather::update() {
     //humidity
     humidity = radio::rawHumidity / 10.0;
 
-    cout << "humidity: " << humidity << endl;
+    D(cout << "humidity: " << humidity << endl);
 
     //dewpoint: http://andrew.rsmas.miami.edu/bmcnoldy/Humidity.html
     float c = radio::rawTemperature / 10.0;
@@ -61,17 +61,17 @@ void weather::update() {
     dewpoint *= 9 / 5.0;
     dewpoint += 32;
 
-    cout << "dewpoint: " << dewpoint << endl;
+    D(cout << "dewpoint: " << dewpoint << endl);
 
     //temperature convert c to f
     temperature = ((radio::rawTemperature / 10.0) * 9 / 5 ) + 32;
 
-    cout << "temperature: " << temperature << endl;
+    D(cout << "temperature: " << temperature << endl);
 
     //barometer convert dpa to inhg
     barometer = radio::rawPressure * 0.0029529983071445;
 
-    cout << "barometer: " << barometer << endl;
+    D(cout << "barometer: " << barometer << endl);
 
     
 
@@ -88,7 +88,7 @@ void weather::update() {
     }
     rainHour = sum / 100.0;
 
-    cout << "rain Hour: " << rainHour << endl;
+    D(cout << "rain Hour: " << rainHour << endl);
 
     //rain day
 
@@ -114,7 +114,7 @@ void weather::update() {
         eeprom::setEEPROM();
     }
 
-    cout << "rain Day: " << rainDay << endl;
+    D(cout << "rain Day: " << rainDay << endl);
 
-    cout << "> Weather Calculated" << endl;
+    D(cout << "> Weather Calculated" << endl);
 }

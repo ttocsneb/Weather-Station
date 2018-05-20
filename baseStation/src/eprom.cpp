@@ -36,7 +36,7 @@ template<typename T>
 bool get_value(std::istream& is, std::string name, std::string token, T& value) {
     if(name == token) {
         is >> value;
-        cout << "got " << token << ": " << value << endl;
+        D(cout << "got " << token << ": " << value << endl);
         return true;
     }
     return false;
@@ -45,17 +45,17 @@ bool get_value(std::istream& is, std::string name, std::string token, T& value) 
 template<typename T>
 void set_value(std::ostream& os, std::string token, T value) {
     os << token << " " << value << endl;
-    cout << "set " << token << ": " << value << endl;
+    D(cout << "set " << token << ": " << value << endl);
 }
 
 void eeprom::loadEEPROM() {
-    cout << "Loading EEPROM" << endl;
+    D(cout << "Loading EEPROM" << endl);
 
     std::ifstream in(EEPROM_FILE);
 
     if(!in.is_open()) {
-        cout << "Cannot open EEPROM File" << endl;
-        cout << "Creating EEPROM File with current values" << endl;
+        D(cout << "Cannot open EEPROM File" << endl);
+        D(cout << "Creating EEPROM File with current values" << endl);
         setEEPROM();
         return;
     }
@@ -78,17 +78,17 @@ void eeprom::loadEEPROM() {
         
     }
 
-    cout << "done" << endl;
+    D(cout << "done" << endl);
 }
 
 void eeprom::setEEPROM() {
-    cout << "Setting EEPROM" << endl;
+    D(cout << "Setting EEPROM" << endl);
 
     std::ofstream out(EEPROM_FILE);
 
     if(!out.is_open()) {
-        cout << "Cannot open EEPROM File" << endl;
-        cout << "Check if '" << EEPROM_FILE << "' exists as a folder, or is writeprotected" << endl;
+        D(cout << "Cannot open EEPROM File" << endl);
+        D(cout << "Check if '" << EEPROM_FILE << "' exists as a folder, or is writeprotected" << endl);
         return;
     }
 
@@ -99,9 +99,9 @@ void eeprom::setEEPROM() {
     set_value(out, value(sql::weatherData_storageTime));
     set_value(out, value(resets));
 
-    cout << "done" << endl;
+    D(cout << "done" << endl);
 }
 
 void eeprom::syncEEPROM() {
-    cout << "eeprom::syncEEPROM() not implemented" << endl;
+    D(cout << "eeprom::syncEEPROM() not implemented" << endl);
 }
