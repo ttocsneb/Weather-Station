@@ -17,7 +17,7 @@
 #define SOLARVOLTAGEPIN A1
 #define SOLARENABLEPIN 20
 #define BATTERY_POLL_TIME 5000
-#define BATTERY_CHARGE_TIME_RESET_THRESHOLD 3600*1000
+#define BATTERY_CHARGE_TIME_RESET_THRESHOLD (unsigned long)(3600)*1000
 
 namespace main {
 
@@ -41,6 +41,8 @@ namespace main {
 
     void loadStatus(uint8_t* data);
     uint8_t getStatusSize();
+
+    void updateBattery();
 
     void reset();
 

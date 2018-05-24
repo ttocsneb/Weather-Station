@@ -16,6 +16,7 @@ void setupInputs() {
 
     pinMode(SOLARVOLTAGEPIN, INPUT);
     pinMode(SOLARENABLEPIN, OUTPUT);
+    digitalWrite(SOLARENABLEPIN, HIGH);
 
 
 }
@@ -90,44 +91,54 @@ void loop() {
             wdt_reset();
         }
 
+        DEBUG_PRINT("Batt Voltage: ");
+        DEBUG_PRINTLN(main::getSolarVoltage());
+
     }
     lastLoopTime = millis();
 
     sensors::update();
     radio::update();
 
+    main::updateBattery();
+    
+
+    delay(1);
+}
+
+void main::updateBattery() {
     static unsigned long lastChargeTime(0);
     static unsigned long lastBatteryPoll(0);
     if(millis() - lastBatteryPoll > BATTERY_POLL_TIME) {
         lastBatteryPoll = millis();
-        float charge = main::getSolarVoltage();
-        if(!main::isCharging && charge > 5.0) {
-            digitalWrite(SOLARENABLEPIN, HIGH);
+        float charge = getSolarVoltage();
+        int batt = round(getBatteryVoltage() * 100);
+        if(!isCharging && charge > 4.8 && batt < 420) {
+            digitalWrite(SOLARENABLEPIN, LOW);
             long t = millis();
+            //run main loop while waiting
             while(t - millis() < 500) {
                 loop();
             }
-            if(main::getSolarVoltage() < 2.5) {
-                digitalWrite(SOLARENABLEPIN, LOW);
+            if(getSolarVoltage() < 4) {
+                digitalWrite(SOLARENABLEPIN, HIGH);
             } else {
-                charge = true;
+                isCharging = true;
                 //Reset the charge time if the time after stopping charge 
                 //is greater than the threshold
                 if(millis() - lastChargeTime > BATTERY_CHARGE_TIME_RESET_THRESHOLD) {
-                    main::chargeTime = 0;
+                    chargeTime = 0;
                 }
             }
-        } else if(main::isCharging && charge < 2.5) {
-            charge = false;
+        } else if(isCharging && (charge < 4 || batt == 420)) {
+            isCharging = false;
             lastChargeTime = millis();
-            digitalWrite(SOLARENABLEPIN, LOW);
+            digitalWrite(SOLARENABLEPIN, HIGH);
         }
 
         DEBUG_PRINT("CHARGE STATUS: ");
-        DEBUG_PRINTLN(main::isCharging ? "Charging" : "Not Charging");
+        DEBUG_PRINTLN(isCharging ? "Charging" : "Not Charging");
     }
-
-    delay(1);
 }
 
 void main::reset() {
@@ -173,7 +184,7 @@ uint32_t main::get32(uint8_t* index) {
 }
 
 float main::getSolarVoltage() {
-    return (analogRead(SOLARVOLTAGEPIN) / 1024.0) * 3.3 * 3.1304;
+    return (analogRead(SOLARVOLTAGEPIN) / 1024.0) * 3.3 * 2;
 }
 
 float main::getBatteryVoltage() {
