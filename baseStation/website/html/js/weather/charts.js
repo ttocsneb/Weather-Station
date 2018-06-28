@@ -321,7 +321,7 @@ function setRanges() {
 
 function loadCharts() {
     
-    $.get("/php/weather-status-full.php", function(data) {
+    $.get("/php/weather/weather-status-full.php", function(data) {
         var obj = JSON.parse(data).data;
 
         for(var i = 0; i < obj.length; i++) {
@@ -334,7 +334,7 @@ function loadCharts() {
 }
 
 function updateChart() {
-    $.get("/php/weather-status-chart.php", function(data) {
+    $.get("/php/weather/weather-status-chart.php", function(data) {
         var obj = JSON.parse(data);
 
         addRow(obj);

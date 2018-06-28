@@ -36,7 +36,7 @@ function degToDir(deg) {
 }
 
 function updateWeather() {
-    $.get("/php/weather-status.php", function(data) {
+    $.get("/php/weather/weather-status.php", function(data) {
         var obj = JSON.parse(data);
 
         time.textContent = obj.date;

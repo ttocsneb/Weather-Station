@@ -2,9 +2,9 @@ MIN=yui-compressor
 TIME=/usr/bin/time --format="Build Duration: %E" 
 
 #directories
-JS_DIR=html/js
+DIR=html
 
-CSS_DIR=html/css
+EXCLUDE_DIR=html/js/includes html/startbootstrap-sb-admin
 
 all:
 	$(TIME) make all-act
@@ -12,32 +12,34 @@ all:
 
 #wildcards
 
-#x_NO_WANT: already existing minified files we want to exclude from sources
-#x_SRCS: sources
-#x_MIN: paths of the minified sources
+# x_NO_WANT: already existing minified files we want to exclude from sources
+# x_CLEAN: Files that we would remove if we wanted to clean
+# x_SRCS: sources
+# x_MIN: paths of the minified sources
 
-JS_NO_WANT := $(wildcard $(JS_DIR)/*-min.js)
-JS_SRCS := $(filter-out $(JS_NO_WANT),$(wildcard $(JS_DIR)/*.js))
-JS_MIN := $(patsubst %.js,%-min.js,$(JS_SRCS))
+JS_NO_WANT := $(shell find $(DIR) -name '*.min.js') $(shell find $(EXCLUDE_DIR) -name '*.js' -prune -type f)
+JS_CLEAN := $(filter-out $(shell find $(EXCLUDE_DIR) -name '*.js' -prune -type f),$(JS_NO_WANT))
+JS_SRCS := $(filter-out $(JS_NO_WANT),$(shell find $(DIR) -name '*.js' -prune -type f))
+JS_MIN := $(patsubst %.js,%.min.js,$(JS_SRCS))
 
-CSS_NO_WANT := $(wildcard $(CSS_DIR)/*-min.css)
-CSS_SRCS := $(filter-out $(CSS_NO_WANT),$(wildcard $(CSS_DIR)/*.css))
-CSS_MIN := $(patsubst %.css,%-min.css,$(CSS_SRCS))
-
+CSS_NO_WANT := $(shell find $(DIR) -name '*.min.css') $(shell find $(EXCLUDE_DIR) -name '*.css' -prune -type f)
+CSS_CLEAN := $(filter-out $(shell find $(EXCLUDE_DIR) -name '*.css' -prune -type f),$(CSS_NO_WANT))
+CSS_SRCS := $(filter-out $(CSS_NO_WANT),$(shell find $(DIR) -name '*.css' -prune -type f))
+CSS_MIN := $(patsubst %.css,%.min.css,$(CSS_SRCS))
 
 all-act: $(JS_MIN) $(CSS_MIN)
 
 
 #minify the js files
-$(JS_DIR)/%-min.js: $(JS_DIR)/%.js
+%.min.js: %.js
 	$(MIN) -o $@ $<
 
 #minify the css files
-$(CSS_DIR)/%-min.css: $(CSS_DIR)/%.css
+%.min.css: %.css
 	$(MIN) -o $@ $<
 
 
 clean:
-	rm $(JS_NO_WANT) $(CSS_NO_WANT)
+	rm $(JS_CLEAN) $(CSS_CLEAN)
 
 .PHONY: all clean
