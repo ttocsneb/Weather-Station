@@ -15,8 +15,7 @@ if(!isset($_SESSION['u_id'])) {
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="wnameth=device-wnameth, initial-scale=1, shrink-to-fit=no">
-	<meta name="description" content="">
-	<meta name="author" content="">
+	<meta name="robots" content="noindex" />
 	<title>Register User</title>
 	<!-- Bootstrap core CSS-->
 	<link href="/startbootstrap-sb-admin/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">

@@ -6,6 +6,7 @@
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <meta name="robots" content="noindex" />
         <title>Weather Station</title>
         
         <!-- Favicon -->
@@ -74,10 +75,50 @@
                     
                     
                 </ul>
+                <!-- Hide sidebar -->
                 <ul class="navbar-nav sidenav-toggler">
                     <li class="nav-item">
                         <a class="nav-link text-center" id="sidenavToggler">
                         <i class="fa fa-fw fa-angle-left"></i>
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- Top bar -->
+                <ul class="navbar-nav ml-auto">
+                    
+                    <li class="nav-item user-loggedin-priv" id="user-change-priv">
+                        <a class="nav-link" href="/user/privileges/">
+                            <i class="fa fa-fw fa-server"></i>
+                            Edit Permissions
+                        </a>
+                    </li>
+
+                    <li class="nav-item user-loggedin-priv" id="user-add-user">
+                        <a class="nav-link" href="/user/register/">
+                            <i class="fa fa-fw fa-user-plus"></i>
+                            Create User
+                        </a>
+                    </li>
+
+                    <li class="nav-item user-loggedin">
+                        <a class="nav-link" href="/user/settings/">
+                            <i class="fa fa-fw fa-user-circle-o"></i>
+                            User Settings
+                        </a>
+                    </li>
+
+                    <li class="nav-item user-loggedin" id="user-logout">
+                        <a class="nav-link" data-toggle="modal" data-target="#exampleModal">
+                            <i class="fa fa-fw fa-sign-out"></i>
+                            Logout
+                        </a>
+                    </li>
+
+                    <li class="nav-item" id="user-login">
+                        <a href="/user/login/" class="nav-link">
+                            <i class="fa fa-fw fa-sign-in"></i>
+                            Login
                         </a>
                     </li>
                 </ul>
@@ -173,6 +214,7 @@
             <script src="/startbootstrap-sb-admin/vendor/datatables/dataTables.bootstrap4.js"></script>
             <!-- Custom scripts for all pages-->
             <script src="/startbootstrap-sb-admin/js/sb-admin.min.js"></script>
+            <script src="/js/users/users.min.js"></script>
             
             <!-- Custom scripts for this page-->
             <script src="/js/weather/charts.min.js"></script>
