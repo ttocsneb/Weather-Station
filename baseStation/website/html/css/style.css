@@ -13,7 +13,7 @@
     display: none;
 }
 
-.user-loggedin {
+.user-loggedin, .user-loggedin-priv {
     display: none;
 }
 

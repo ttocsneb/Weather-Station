@@ -1,4 +1,5 @@
-MIN=yui-compressor
+MIN=uglifyjs --compress --mangle
+MINCSS=yui-compressor
 TIME=/usr/bin/time --format="Build Duration: %E" 
 
 #directories
@@ -18,12 +19,12 @@ all:
 # x_MIN: paths of the minified sources
 
 JS_NO_WANT := $(shell find $(DIR) -name '*.min.js') $(shell find $(EXCLUDE_DIR) -name '*.js' -prune -type f)
-JS_CLEAN := $(filter-out $(shell find $(EXCLUDE_DIR) -name '*.js' -prune -type f),$(JS_NO_WANT))
+JS_CLEAN := $(filter-out $(shell find $(EXCLUDE_DIR)),$(JS_NO_WANT))
 JS_SRCS := $(filter-out $(JS_NO_WANT),$(shell find $(DIR) -name '*.js' -prune -type f))
 JS_MIN := $(patsubst %.js,%.min.js,$(JS_SRCS))
 
 CSS_NO_WANT := $(shell find $(DIR) -name '*.min.css') $(shell find $(EXCLUDE_DIR) -name '*.css' -prune -type f)
-CSS_CLEAN := $(filter-out $(shell find $(EXCLUDE_DIR) -name '*.css' -prune -type f),$(CSS_NO_WANT))
+CSS_CLEAN := $(filter-out $(shell find $(EXCLUDE_DIR)),$(CSS_NO_WANT))
 CSS_SRCS := $(filter-out $(CSS_NO_WANT),$(shell find $(DIR) -name '*.css' -prune -type f))
 CSS_MIN := $(patsubst %.css,%.min.css,$(CSS_SRCS))
 
@@ -32,11 +33,11 @@ all-act: $(JS_MIN) $(CSS_MIN)
 
 #minify the js files
 %.min.js: %.js
-	$(MIN) -o $@ $<
+	$(MIN) -o $@ -- $<
 
-#minify the css files
+# minify the css files
 %.min.css: %.css
-	$(MIN) -o $@ $<
+	$(MINCSS) -o $@ $<
 
 
 clean:

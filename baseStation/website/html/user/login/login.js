@@ -15,7 +15,7 @@ function submitLogin() {
 
     var origin = findGetParameter("origin");
     if (origin == null) {
-        origin = "/";
+        origin = "";
     }
 
     $.post("/php/login/login.php", 
@@ -25,7 +25,7 @@ function submitLogin() {
     }, function(data, status) {
         if(data == "success") {
             $("#login-error").hide();
-            window.location.replace(origin);
+            window.location.replace(window.location.protocol + "//" + window.location.host + "/" + origin);
         } else {
             $("#login-error").html(data);
             $("#login-error").show();
