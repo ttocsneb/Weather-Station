@@ -6,6 +6,7 @@
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <meta name="robots" content="noindex" />
         <title>Weather Station</title>
         
         <!-- Favicon -->
@@ -29,23 +30,23 @@
         
         
         <!-- Bootstrap core CSS-->
-        <link href="startbootstrap-sb-admin/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+        <link href="/startbootstrap-sb-admin/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
         <!-- Custom fonts for this template-->
-        <link href="startbootstrap-sb-admin/vendor/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+        <link href="/startbootstrap-sb-admin/vendor/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
         <!-- Page level plugin CSS-->
-        <link href="startbootstrap-sb-admin/vendor/datatables/dataTables.bootstrap4.css" rel="stylesheet">
+        <link href="/startbootstrap-sb-admin/vendor/datatables/dataTables.bootstrap4.css" rel="stylesheet">
         <!-- Custom styles for this template-->
-        <link href="startbootstrap-sb-admin/css/sb-admin.css" rel="stylesheet">
+        <link href="/startbootstrap-sb-admin/css/sb-admin.css" rel="stylesheet">
         
         <!-- Custom styles for this website -->
-        <link href="css/style-min.css" rel="stylesheet">
+        <link href="/css/style.min.css" rel="stylesheet">
         
     </head>
     <body class="fixed-nav sticky-footer bg-dark" id="page-top">
         <!-- Navigation -->
         <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top" id="mainNav">
             
-            <a class="navbar-brand" href="index.html">Weather Station</a>
+            <a class="navbar-brand" href="/">Weather Station</a>
             <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -54,24 +55,71 @@
                 <ul class="navbar-nav navbar-sidenav" id="exampleAccordion">
                     
                     <li class="nav-item" data-toggle="tooltip" data-placement="right" title="Dashboard">
-                        <a class="nav-link" href="index.html">
+                        <a class="nav-link" href="/">
                             <i class="fa fa-fw fa-dashboard"></i>
                             <span class="nav-link-text">Dashboard</span>
                         </a>
-                        <a class="nav-link" href="weather.html">
+                        <a class="nav-link" href="/weather">
                             <i class="fa fa-fw fa-area-chart"></i>
                             <span class="nav-link-text">Weather</span>
                         </a>
-                        <a class="nav-link" href="config.html">
+                        <a class="nav-link" href="/config">
                             <i class="fa fa-fw fa-cogs"></i>
                             <span class="nav-link-text">Settings</span>
                         </a>
-                        <a class="nav-link" href="start.html">
+                        <a class="nav-link" href="/start.html">
                             <i class="fa fa-fw fa-link"></i>
                             <span class="nav-link-text">Start Page</span>
                         </a>
                     </li>
                     
+                </ul>
+                <!-- Hide sidebar -->
+                <ul class="navbar-nav sidenav-toggler">
+                    <li class="nav-item">
+                        <a class="nav-link text-center" id="sidenavToggler">
+                        <i class="fa fa-fw fa-angle-left"></i>
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- Top bar -->
+                <ul class="navbar-nav ml-auto">
+                    
+                    <li class="nav-item user-loggedin-priv" id="user-change-priv">
+                        <a class="nav-link" href="/user/privileges/">
+                            <i class="fa fa-fw fa-server"></i>
+                            Edit Permissions
+                        </a>
+                    </li>
+
+                    <li class="nav-item user-loggedin-priv" id="user-add-user">
+                        <a class="nav-link" href="/user/register/">
+                            <i class="fa fa-fw fa-user-plus"></i>
+                            Create User
+                        </a>
+                    </li>
+
+                    <li class="nav-item user-loggedin">
+                        <a class="nav-link" href="/user/settings/">
+                            <i class="fa fa-fw fa-user-circle-o"></i>
+                            User Settings
+                        </a>
+                    </li>
+
+                    <li class="nav-item user-loggedin" id="user-logout">
+                        <a class="nav-link" data-toggle="modal" data-target="#exampleModal">
+                            <i class="fa fa-fw fa-sign-out"></i>
+                            Logout
+                        </a>
+                    </li>
+
+                    <li class="nav-item" id="user-login">
+                        <a href="/user/login/" class="nav-link">
+                            <i class="fa fa-fw fa-sign-in"></i>
+                            Login
+                        </a>
+                    </li>
                 </ul>
             </div>
         </nav>
@@ -133,20 +181,21 @@
             
             
             <!-- Bootstrap core JavaScript-->
-            <script src="startbootstrap-sb-admin/vendor/jquery/jquery.min.js"></script>
-            <script src="js/includes/moment.min.js"></script>
-            <script src="startbootstrap-sb-admin/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+            <script src="/startbootstrap-sb-admin/vendor/jquery/jquery.min.js"></script>
+            <script src="/js/includes/moment.min.js"></script>
+            <script src="/startbootstrap-sb-admin/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
             <!-- Core plugin JavaScript-->
-            <script src="startbootstrap-sb-admin/vendor/jquery-easing/jquery.easing.min.js"></script>
+            <script src="/startbootstrap-sb-admin/vendor/jquery-easing/jquery.easing.min.js"></script>
             <!-- Page level plugin JavaScript-->
-            <script src="startbootstrap-sb-admin/vendor/chart.js/Chart.min.js"></script>
-            <script src="startbootstrap-sb-admin/vendor/datatables/jquery.dataTables.js"></script>
-            <script src="startbootstrap-sb-admin/vendor/datatables/dataTables.bootstrap4.js"></script>
+            <script src="/startbootstrap-sb-admin/vendor/chart.js/Chart.min.js"></script>
+            <script src="/startbootstrap-sb-admin/vendor/datatables/jquery.dataTables.js"></script>
+            <script src="/startbootstrap-sb-admin/vendor/datatables/dataTables.bootstrap4.js"></script>
             <!-- Custom scripts for all pages-->
-            <script src="startbootstrap-sb-admin/js/sb-admin.min.js"></script>
+            <script src="/startbootstrap-sb-admin/js/sb-admin.min.js"></script>
+            <script src="/js/users/users.min.js"></script>
             
             <!-- Custom scripts for this page-->
-            <script src="js/status-min.js"></script>
+            <script src="/js/status.min.js"></script>
             
         </div>
     </body>
