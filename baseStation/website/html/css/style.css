@@ -12,3 +12,11 @@
 #station-reporting, #station-not-reporting {
     display: none;
 }
+
+.user-loggedin {
+    display: none;
+}
+
+.hide {
+    display: none;
+}

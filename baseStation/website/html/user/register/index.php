@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-if(isset($_SESSION['u_id'])) {
+if(!isset($_SESSION['u_id'])) {
 	header("Location: /");
 	exit();
 }
@@ -14,16 +14,19 @@ if(isset($_SESSION['u_id'])) {
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	<meta name="viewport" content="wnameth=device-wnameth, initial-scale=1, shrink-to-fit=no">
 	<meta name="description" content="">
 	<meta name="author" content="">
-	<title>Login</title>
+	<title>Register User</title>
 	<!-- Bootstrap core CSS-->
 	<link href="/startbootstrap-sb-admin/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
 	<!-- Custom fonts for this template-->
 	<link href="/startbootstrap-sb-admin/vendor/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
 	<!-- Custom styles for this template-->
 	<link href="/startbootstrap-sb-admin/css/sb-admin.css" rel="stylesheet">
+
+	<!-- Custom styles for the website -->
+	<link href="/css/style.min.css" rel="stylesheet">
 
 	<!-- Favicon -->
 	<link rel="apple-touch-icon" sizes="57x57" href="/favicon/apple-icon-57x57.png">
@@ -43,36 +46,45 @@ if(isset($_SESSION['u_id'])) {
 	<meta name="msapplication-TileColor" content="#ffffff">
 	<meta name="msapplication-TileImage" content="/favicon/ms-icon-144x144.png">
 	<meta name="theme-color" content="#ffffff">
+
 </head>
 
 <body class="bg-dark">
 	<div class="container">
-		<div class="card card-login mx-auto mt-5">
-			<div class="card-header">Login</div>
+		<div class="card card-register mx-auto mt-5">
+			<div class="card-header">
+				<form action="/">
+					<button type="submit" class="close" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+					</button>
+			</form>
+            Register an Account
+			</div>
 			<div class="card-body">
-				<form action="javascript:;" onsubmit="submitLogin()">
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="alert alert-danger" id="login-error" style="display: none;"></div>
-                        </div>
-                    </div>
-
+				<div class="alert alert-danger hide" id="register-fail"></div>
+				<div class="alert alert-success hide" id="register-success">Successfully created Account</div>
+				<form action="/php/login/createUser.php" method="POST">
 					<div class="form-group">
 						<label for="username">User Name</label>
 						<input class="form-control" name="username" type="text" placeholder="Username">
 					</div>
 					<div class="form-group">
-						<label for="pwd">Password</label>
-						<input class="form-control" name="pwd" type="password" placeholder="Password">
-					</div>
-					<div class="form-group">
-						<div class="form-check">
-							<label class="form-check-label">
-								<input class="form-check-input" type="checkbox"> Remember Password</label>
+						<div class="form-row">
+							<div class="col-md-6">
+								<label for="password">Password</label>
+								<input class="form-control" name="password" type="password" placeholder="Password">
+							</div>
+							<div class="col-md-6">
+								<label for="passwordc">Confirm password</label>
+								<input class="form-control" name="passwordc" type="password" placeholder="Confirm password">
+							</div>
 						</div>
 					</div>
-					<button class="btn btn-primary btn-block" name="submit">Login</button>
+					<input class="btn btn-primary btn-block" type="submit" name="submit" value="Register">
 				</form>
+				<div class="text-center">
+					<a class="d-block small mt-3" href="/user/login/">Login Page</a>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -80,10 +92,10 @@ if(isset($_SESSION['u_id'])) {
 	<script src="/startbootstrap-sb-admin/vendor/jquery/jquery.min.js"></script>
 	<script src="/startbootstrap-sb-admin/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 	<!-- Core plugin JavaScript-->
-    <script src="/startbootstrap-sb-admin/vendor/jquery-easing/jquery.easing.min.js"></script>
-    
-    <!-- Login javascript -->
-    <script src="login.js"></script>
+	<script src="/startbootstrap-sb-admin/vendor/jquery-easing/jquery.easing.min.js"></script>
+
+	<!-- Page js -->
+	<script src="register.min.js"></script>
 </body>
 
 </html>

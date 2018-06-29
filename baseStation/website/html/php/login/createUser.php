@@ -1,6 +1,6 @@
 <?php
 
-$WEB = "../../register.html";
+$WEB = "/user/register/";
 $REG = "?register";
 
 if($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -9,48 +9,42 @@ if($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         include_once "dbh.php";
 
-        $username = $_POST['username'];
-        $pass = $_POST['password'];
-        $pass2 = $_POST['passwordc'];
+        $username = $conn->real_escape_string($_POST['username']);
+        $pass = $conn->real_escape_string($_POST['password']);
+        $pass2 = $conn->real_escape_string($_POST['passwordc']);
 
         // Error handlers
 
         // Check for empty fields
         if(empty($username) || empty($pass) || empty($pass2)) {
             header("Location: $WEB$REG=empty");
+            $conn->close();
             exit();
         }
 
         // Check for valid characters
         if(!preg_match("/^[a-zA-Z0-9]*$/", $username)) {
             header("Location: $WEB$REG=invalid");
+            $conn->close();
             exit();
         }
 
         // check for matching passwords
 
         if($pass != $pass2) {
-            header("Location: $WEB$REG=donntmatch");
+            header("Location: $WEB$REG=dontmatch");
+            $conn->close();
             exit();
         }
 
-        $stmt = $conn->prepare("SELECT * FROM users WHERE user_name=?");
-        if($stmt != false) {
-            $stmt->bind_param("s", $username);
-            $result = $stmt->execute();
-            $resultCheck = mysqli_num_rows($result);
+        $stmt = "SELECT * FROM users WHERE user_name='$username'";
+        $result = $conn->query($stmt);
 
-            if($resultCheck > 0) {
-                header("Location: $WEB$REG=usertaken");
-                exit();
-            }
-
-            $stmt->close();
-        } else {
-            die($conn->error);
-
+        if($result->num_rows > 0) {
+            header("Location: $WEB$REG=usertaken");
+            $conn->close();
+            exit();
         }
-        
 
         // Hash the password
 
@@ -58,18 +52,15 @@ if($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         // Add user
 
-        $stmt = $conn->prepare("INSERT INTO users (user_name, user_pass) VALUES (?, ?)");
-        if($stmt != false) {
-            $stmt->bind_param("ss", $username, $hashpwd);
-            $stmt->execute();
-            $stmt->close();
-        } else {
-            // header("Location: $WEB$REG=error");
-            // exit();
-            die($conn->error);
-        }
+        $stmt = "INSERT INTO users (user_name, user_pass) VALUES ('$username', '$hashpwd')";
+        $conn->query($stmt);
 
-        header("Location: $WEB$REG=success");
+        if($conn->affected_rows > 0) {
+            header("Location: $WEB$REG=success");
+        } else {
+            header("Location: $WEB$REG=fail");
+        }
+        $conn->close();
         exit();
         
 

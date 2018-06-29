@@ -1,14 +1,24 @@
-var login = document.getElementById("user-login");
-var logout = document.getElementById("user-logout");
 
-window.addEventListener("load", function(event) {
+function setLoginButton() {
     $.get("/php/login/isLoggedIn.php", function(data) {
-        if(data == "true") {
-            login.style.display='none';
-            logout.style.display='block';
+        if(data != "false") {
+            console.log("Logged in");
+            $(".user-loggedin").show();
+            $("#user-login").hide();
         } else {
-            login.style.display='block';
-            logout.style.display='none';
+            console.log("Logged out");
+            $(".user-loggedin").hide();
+            $("#user-login").show();
         }
     });
+}
+
+function logout() {
+    $.get("/php/login/logout.php", function(data) {
+        location.reload(true);
+    });
+}
+
+window.addEventListener("load", function(event) {
+    setLoginButton();
 });

@@ -15,7 +15,7 @@ function submitLogin() {
 
     var origin = findGetParameter("origin");
     if (origin == null) {
-        origin = "/"
+        origin = "/";
     }
 
     $.post("/php/login/login.php", 
