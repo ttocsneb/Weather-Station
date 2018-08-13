@@ -16,6 +16,3 @@
 [submodule "Weather Station/lib/FaBoBarometer-MPL115-Library"]
 	path = Weather Station/lib/FaBoBarometer-MPL115-Library
 	url = https://github.com/FaBoPlatform/FaBoBarometer-MPL115-Library.git
-[submodule "baseStation/website/html/startbootstrap-sb-admin"]
-	path = baseStation/website/html/startbootstrap-sb-admin
-	url = https://github.com/BlackrockDigital/startbootstrap-sb-admin.git
