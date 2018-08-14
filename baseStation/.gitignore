@@ -4,3 +4,4 @@ baseStation
 .eeprom
 *.log
 __*
+*coppermind.sh
