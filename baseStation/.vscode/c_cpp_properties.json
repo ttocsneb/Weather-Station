@@ -54,7 +54,8 @@
                 "C:/Program Files (x86)/Windows Kits/10/Include/10.0.16299.0/winrt",
                 "${workspaceFolder}/lib",
                 "${workspaceFolder}/lib/RF24",
-                "${workspaceFolder}/lib/wiringPi/wiringPi"
+                "${workspaceFolder}/lib/wiringPi/wiringPi",
+                "${workspaceFolder}/lib/SQLiteCpp/include"
             ],
             "defines": [
                 "_DEBUG",
