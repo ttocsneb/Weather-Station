@@ -9,9 +9,10 @@ IDIR = src
 SRCDIR = src
 # .o directory
 ODIR=bin
-LIB_INC=-I/usr/local/include
-LIB=/usr/local/lib
-LIBS=-lrf24 -lwiringPi -lmariadbclient -lmysqlcppconn -lsystemd
+LIB_INC=-I/usr/local/include -Ilib/SQLiteCpp/include
+LIB=-L/usr/local/lib -L/usr/lib
+LIBS=-lrf24 -lwiringPi -lsqlite3 -lsystemd
+LINKS=lib/SQLiteCpp/build/libSQLiteCpp.a
 
 PROG_NAME=baseStation
 
@@ -33,7 +34,7 @@ get:
 
 # Compile Flags
 CFLAGS=-Wall
-INCLUDES = -I$(IDIR) $(LIB_INC) -L$(LIB) $(LIBS)
+INCLUDES = -I$(IDIR) $(LIB_INC) $(LIB) $(LIBS)
 
 
 # Dependency files
@@ -51,7 +52,7 @@ $(ODIR)/%.o: $(SRCDIR)/%.cpp $(DEPS)
 
 # compile the main program
 $(PROG_NAME): $(OBJ)
-	$(CXX) $(CFLAGS) $(INCLUDES) -o $@ $^ 
+	$(CXX) $(CFLAGS) $(INCLUDES) -o $@ $^ $(LINKS)
 
 
 # Clear the binaries

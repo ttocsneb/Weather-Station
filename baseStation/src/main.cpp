@@ -133,7 +133,6 @@ int main(int argc, char** argv) {
             commands::getStatus(&gotStatus);
         }
         
-        mysql::commit();
         sleep_until(t);
     }
 

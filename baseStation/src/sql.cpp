@@ -3,327 +3,225 @@
 #include <sstream>
 #include <ctime>
 #include <iomanip>
+#include <iostream>
+#include <exception>
 
-#include <cppconn/driver.h>
-#include <cppconn/exception.h>
-#include <cppconn/resultset.h>
-#include <cppconn/statement.h>
-#include <cppconn/prepared_statement.h>
+#include <SQLiteCpp/SQLiteCpp.h>
 
 #include "weather.h"
 #include "main.h"
 #include "eprom.h"
 #include "commands.h"
 
+const char* DATABASE_FILE = "weather.db";
+
 using std::cout;
 using std::cerr;
 using std::endl;
 
-sql::Connection* connect = NULL;
+// TODO: Implement the rest of the hecking owl
 
-#ifdef DEBUG
-void sendStatement(std::string command) {
-    cout << "Sent SQL Command:" << endl << command << endl;
-}
-#else
-#define sendStatement(x)
-#endif
+bool mysql::addWeatherData() {
+    try {
+        SQLite::Database db(DATABASE_FILE, SQLite::OPEN_READWRITE);
 
-bool execute(sql::Statement* stmt, std::string command) {
-    bool ret = stmt->execute(command);
-    sendStatement(command);
-    return ret;
-}
+        SQLite::Transaction transaction(db);
 
-sql::ResultSet* executeQuery(sql::Statement* stmt, std::string command) {
-    sql::ResultSet* ret = stmt->executeQuery(command);
-    sendStatement(command);
-    return ret;
-}
+        SQLite::Statement query(db, 
+            "INSERT INTO data "
+            "(humidity, dewpoint, temperature, rain_hour, rain_day, "
+            "pressure, wind_speed, wind_dir, wind_gust, wind_gust_dir, "
+            "wind_avg, wind_avg_dir) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        
+        query.bind(1, weather::humidity);
+        query.bind(2, weather::dewpoint);
+        query.bind(3, weather::temperature);
+        query.bind(4, weather::rainHour);
+        query.bind(5, weather::rainDay);
+        query.bind(6, weather::barometer);
+        query.bind(7, weather::windSpeed);
+        query.bind(8, weather::windDirection);
+        query.bind(9, weather::windGust10Min);
+        query.bind(10, weather::windGustDirection10Min);
+        query.bind(11, weather::averageWindSpeed2Min);
+        query.bind(12, weather::averageWindDirection2Min);
 
-int executefoo(sql::Statement* stmt, std::string command) {
-    int ret = stmt->executeUpdate(command);
-    sendStatement(command);
-    return ret;
-}
+        query.exec();
 
-void printSQLError(sql::SQLException &e) {
-    cerr << "SQL Error: " << e.what();
-    cerr << " (MySQL error code: " << e.getErrorCode();
-    cerr << ", SQLState: " << e.getSQLState() << ")" << endl;
-}
+        transaction.commit();
 
-bool connectSQL() {
-    if(!connect) {
-        try {
-            sql::Driver* driver = get_driver_instance();
-            connect = driver->connect("localhost", "cpp", "");
-            connect->setSchema("weather");
-        } catch (sql::SQLException &e) {
-            printSQLError(e);
-            return false;
-        }
-    }
-    return true;
-}
+        return true;
 
-bool mysql::commit() {
-    if(connect) {
-        try {
-            connect->commit();
-
-            delete connect;
-            connect = NULL;
-
-            return true;
-
-        } catch(sql::SQLException &e) {
-            printSQLError(e);
-        }
+    } catch(std::exception e) {
+        cerr << "mysql error: " << e.what() << endl;
     }
     return false;
 }
 
-
-
-bool mysql::addWeatherData() {
-    if(!connectSQL()) {
-        return false;
-    }
-
-    D(cout << "Adding WeatherData to SQL" << endl);
-
-    //Generate the SQL command
-    std::stringstream ss;
-    ss << "INSERT INTO data ";
-    ss << "(humidity, dewpoint, temperature, rain_hour, rain_day, ";
-    ss << "pressure, wind_speed, wind_dir, wind_gust, wind_gust_dir, ";
-    ss << "wind_avg, wind_avg_dir) ";
-    ss << "VALUES (";
-    ss << weather::humidity << ", ";
-    ss << weather::dewpoint << ", ";
-    ss << weather::temperature << ", ";
-    ss << weather::rainHour << ", ";
-    ss << weather::rainDay << ", ";
-    ss << weather::barometer << ", ";
-    ss << weather::windSpeed << ", ";
-    ss << weather::windDirection << ", ";
-    ss << weather::windGust10Min << ", ";
-    ss << weather::windGustDirection10Min << ", ";
-    ss << weather::averageWindSpeed2Min << ", ";
-    ss << weather::averageWindDirection2Min << ")";
-    std::string com = ss.str();
-
-    try {
-        sql::Statement *stmt;
-
-        //execute the SQL command
-        stmt = connect->createStatement();
-        execute(stmt, com);
-
-        delete stmt;
-
-    } catch(sql::SQLException &e) {
-        printSQLError(e);
-
-        return false;
-    }
-
-
-    return true;
-}
-
 bool mysql::pruneWeatherData() {
-    if(!connectSQL()) {
-        return false;
-    }
-    
-    D(cout << "Pruning SQL Weather Data" << endl);
-
-    //delete all entries from data where the date 
-    //is older than eeprom::sql::weatherData_storageTime hours
-
-    std::stringstream ss;
-    ss << "DELETE FROM graphdata ";
-    ss << "WHERE date <= '";
-    ss << global::getsqlDate(system_clock::now() 
-        - std::chrono::hours(eeprom::sql::weatherData_storageTime));
-    ss << "'";
-
-    
     try {
-        sql::Statement *statement = connect->createStatement();
 
-        execute(statement, ss.str());
+        SQLite::Database db(DATABASE_FILE, SQLite::OPEN_READWRITE);
 
-
-        delete statement;
+        SQLite::Transaction transaction(db);
+        SQLite::Statement query(db,
+            "DELETE FROM graphdata "
+            "Where date <= ?");
+        
+        query.bind(1, global::getsqlDate(system_clock::now() - 
+                   std::chrono::hours(eeprom::sql::weatherData_storageTime)));
+        
+        query.exec();
+        transaction.commit();
 
         return true;
-    } catch(sql::SQLException &e) {
-        printSQLError(e);
+
+    } catch(std::exception e) {
+        cerr << "mysql error: " << e.what() << endl;
     }
     return false;
 }
 
 bool mysql::minifyWeatherData(unsigned int age) {
-    if(!connectSQL()) {
-        return false;
-    }
-
-    //Get the date of the oldest entry
-    const std::string GET_AGE = 
-        "SELECT "
-            "UNIX_TIMESTAMP(MIN(date)) AS date "
-        "FROM data";
-
-    //Insert into graphdata the average of all the rows in data
-    const std::string ADD_AVERAGE = 
-        "INSERT INTO graphdata "
-        "SELECT "
-            "FROM_UNIXTIME("
-                "(UNIX_TIMESTAMP(MIN(date)) + "
-                "UNIX_TIMESTAMP(MAX(date)))"
-                " / 2)"
-            " AS average_date,"
-            " AVG(humidity),"
-            " AVG(temperature),"
-            " MAX(rain_hour),"
-            " MAX(rain_day),"
-            " AVG(pressure),"
-            " AVG(wind_speed),"
-            " AVG(wind_dir),"
-            " MAX(wind_gust),"
-            " AVG(wind_gust_dir),"
-            " AVG(wind_avg),"
-            " AVG(wind_avg_dir),"
-            " AVG(dewpoint)"
-        " FROM data";
-    
-    //Delete all of the rows in data except for the newest one
-    const std::string REMOVE_ROWS = 
-        "DELETE d FROM data AS d "
-            "JOIN "
-                "(SELECT MAX(date) AS date FROM data) "
-                "AS lim "
-            "ON d.date < lim.date";
-    
-
     try {
-        sql::Statement* stmt = connect->createStatement();
 
-        sql::ResultSet* res = executeQuery(stmt, GET_AGE);
+        SQLite::Database db(DATABASE_FILE, SQLite::OPEN_READWRITE);
 
-        //Only Minify if the oldest row is more than age minutes old
-        res->first();
-        uint32_t timestamp = res->getInt("date");
+        SQLite::Statement query(db,
+            "SELECT "
+                "UNIX_TIMESTAMP(MIN(date)) AS date "
+            "FROM data");
+        
+        query.executeStep();
+
+        // Only minify the data if the oldest row is more than `age` minutes old
+        uint32_t date = query.getColumn(0);
         std::time_t t = std::time(nullptr);
-        if(t - timestamp < 60 * age) {
+        if(t - date < 60 * age) {
             return true;
         }
 
-        D(cout << "Minifying Weather Data: " << endl);
-        
-        execute(stmt, ADD_AVERAGE);
-        execute(stmt, REMOVE_ROWS);
+        SQLite::Transaction transaction(db);
 
-        delete res;
-        delete stmt;
+        // Insert one row into graphdata that is the average of all the rows in data
+        db.exec(
+            "INSERT INTO graphdata "
+            "SELECT "
+                "FROM_UNIXTIME("
+                    "UNIX_TIMESTAMP(MIN(date)) + "
+                    "UNIX_TIMESTAMP(MAX(date))) "
+                    "/ 2) AS average_date, "
+                "AVG(humidity), "
+                "AVG(temperature), "
+                "MAX(rain_day), "
+                "MAX(rain_hour), "
+                "AVG(pressure), "
+                "AVG(wind_speed), "
+                "AVG(wind_dir), "
+                "MAX(wind_gust), "
+                "AVG(wind_gust_dir), "
+                "AVG(wind_avg), "
+                "AVG(wind_avg_dir), "
+                "AVG(dewpoint) "
+            "FROM data"
+        );
+
+        // Delete everything except the newest row
+        db.exec(
+            "DELETE d FROM data AS d "
+                "JOIN "
+                    "(SELECT MAX(date) AS date FROM data) "
+                    "AS lim "
+                "ON d.date < lim.date"
+        );
+
+        transaction.commit();
 
         return true;
-    } catch(sql::SQLException &e) {
-        printSQLError(e);
-    }
 
+    } catch(std::exception e) {
+        cerr << "mysql error: " << e.what() << endl;
+    }
     return false;
 }
 
 bool mysql::updateStatus() {
-    if(!connectSQL()) {
-        return false;
-    }
-
-    D(cout << "Updating SQL Status" << endl);
-
-    const std::string SET_STATUS = 
-        "UPDATE status "
-            "SET "
-                "battery=?, "
-                "is_charging=?, "
-                "time_charging=?, "
-                "uptime=?, "
-                "resets=?, "
-                "lost_packets=?, "
-                "reporting=?, "
-                "base_uptime=?, "
-                "base_resets=?";
-
     try {
 
-        sql::PreparedStatement* stmt = connect->prepareStatement(SET_STATUS);
+        SQLite::Database db(DATABASE_FILE, SQLite::OPEN_READWRITE);
 
-        stmt->setDouble(1, commands::status::batteryVoltage);
-        stmt->setBoolean(2, commands::status::isCharging);
-        stmt->setUInt(3, commands::status::chargingTime);
-        stmt->setUInt(4, commands::status::uptime);
-        stmt->setUInt(5, commands::status::numResets);
-        stmt->setUInt(6, commands::status::lostPackets);
-        stmt->setBoolean(7, commands::status::isReporting);
-        stmt->setUInt(8, commands::status::base::uptime);
-        stmt->setUInt(9, commands::status::base::resets);
+        SQLite::Transaction transaction(db);
 
-        stmt->execute();
-        sendStatement(SET_STATUS);
+        SQLite::Statement query(db,
+            "UPDATE status "
+                "SET "
+                    "battery=?, "
+                    "is_charging=?, "
+                    "time_charging=?, "
+                    "uptime=?, "
+                    "resets=?, "
+                    "lost_packets=?, "
+                    "reporting=?, "
+                    "base_uptime=?, "
+                    "base_resets=?"
+        );
 
-        
-        delete stmt;
+        query.bind(1, commands::status::batteryVoltage);
+        query.bind(2, commands::status::isCharging);
+        query.bind(3, commands::status::chargingTime);
+        query.bind(4, commands::status::uptime);
+        query.bind(5, commands::status::numResets);
+        query.bind(6, commands::status::lostPackets);
+        query.bind(7, commands::status::isReporting);
+        query.bind(8, commands::status::base::uptime);
+        query.bind(9, commands::status::base::resets);
+
+        query.exec();
+
+        transaction.commit();
 
         return true;
-    } catch(sql::SQLException &e) {
-        printSQLError(e);
-    }
 
+    } catch(std::exception e) {
+        cerr << "mysql error: " << e.what() << endl;
+    }
     return false;
 }
 
-
 bool mysql::getCommands(std::string &commands) {
     commands = "";
-    if(!connectSQL()) {
-        return false;
-    }
-
-    D(cout << "Collecting Commands from SQL" << endl);
 
     try {
-        sql::Statement *statement = connect->createStatement();
-        sql::ResultSet *result;
 
-        //Get the commands
-        result = executeQuery(statement, "SELECT * FROM commands");
-        if(!result->next()) {
+        SQLite::Database db(DATABASE_FILE, SQLite::OPEN_READWRITE);
+        
+
+        SQLite::Statement query(db,
+            "SELECT * FROM commands"
+        );
+
+        if(!query.executeStep()) {
             D(cout << "Found no commands" << endl);
             return false;
         }
 
-        D(cout << "Got Commands:" << endl);
-
-        //Read the commands into the commands variable
         do {
-            commands = commands + result->getString("command") + "\n";
-            D(cout << "#" << result->getInt("id") << ": " << result->getString("command") << endl);
-        } while(result->next());
+            // TODO: find actual column number
+            const char* command = query.getColumn(1);
+            commands += command + '\n';
 
-        //remove the read commands
-        execute(statement, "DELETE FROM commands");
+            D(cout << "#" << query.getColumn(0) << ": " << command << endl);
+        } while(query.executeStep());
 
-        delete statement;
-        delete result;
+        SQLite::Transaction transaction(db);
+        db.exec("DELETE FROM commands");
+        transaction.commit();
 
         return true;
-    } catch(sql::SQLException &e) {
-        printSQLError(e);
+
+    } catch(std::exception e) {
+        cerr << "mysql error: " << e.what() << endl;
     }
-    
     return false;
 }

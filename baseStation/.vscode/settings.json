@@ -1,5 +1,4 @@
 {
-    "C_Cpp.intelliSenseEngineFallback": "Enabled",
     "files.associations": {
         "iostream": "cpp",
         "cstddef": "cpp",
@@ -65,6 +64,9 @@
         "xlocmes": "cpp",
         "xtree": "cpp"
     },
-    "python.pythonPath": "C:\\Users\\Benjamin\\AppData\\Local\\Programs\\Python\\Python36\\python.exe",
-    "C_Cpp.errorSquiggles": "Enabled"
+    "C_Cpp.intelliSenseEngineFallback":"Enabled",
+    "C_Cpp.errorSquiggles": "Enabled",
+    "C_Cpp.intelliSenseEngine": "Default",
+    "C_Cpp.autocomplete": "Default",
+
 }
