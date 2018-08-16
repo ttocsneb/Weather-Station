@@ -86,6 +86,8 @@ int main(int argc, char** argv) {
     commands::status::base::resets = eeprom::resets;
     eeprom::setEEPROM();
 
+    mysql::begin();
+
     weather::begin();
 
     radio::begin();

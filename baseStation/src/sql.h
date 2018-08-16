@@ -9,6 +9,14 @@
 namespace mysql {
 
     /**
+     * Setup the SQL namespace.
+     * 
+     * @note should be called after eeprom is loaded.
+     * 
+     */
+    void begin();
+
+    /**
      * Add an entry to the weather.data SQL table
      * 
      * @return true if successful

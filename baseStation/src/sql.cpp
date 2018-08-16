@@ -13,13 +13,23 @@
 #include "eprom.h"
 #include "commands.h"
 
-const char* DATABASE_FILE = "weather.db";
+std::string DATABASE_FILE = "";
 
 using std::cout;
 using std::cerr;
 using std::endl;
 
-// TODO: Implement the rest of the hecking owl
+void printError(SQLite::Exception &e) {
+    cerr << "mysql error: [" << e.getErrorCode() << "] " << e.getErrorStr() << endl;
+
+    if(e.getErrorCode() == 14) {
+        cerr << "file: " << DATABASE_FILE << endl;
+    }
+}
+
+void mysql::begin() {
+    DATABASE_FILE = eeprom::params::database;
+}
 
 bool mysql::addWeatherData() {
     try {
@@ -52,9 +62,9 @@ bool mysql::addWeatherData() {
         transaction.commit();
 
         return true;
-
-    } catch(std::exception e) {
-        cerr << "mysql error: " << e.what() << endl;
+    } catch(SQLite::Exception e) {
+        cerr << "Error while trying to update weather" << endl;
+        printError(e);
     }
     return false;
 }
@@ -77,8 +87,8 @@ bool mysql::pruneWeatherData() {
 
         return true;
 
-    } catch(std::exception e) {
-        cerr << "mysql error: " << e.what() << endl;
+    } catch(SQLite::Exception e) {
+        printError(e);
     }
     return false;
 }
@@ -140,8 +150,9 @@ bool mysql::minifyWeatherData(unsigned int age) {
 
         return true;
 
-    } catch(std::exception e) {
-        cerr << "mysql error: " << e.what() << endl;
+    } catch(SQLite::Exception e) {
+        cerr << "Error while trying to prune weatherdata" << endl;
+        printError(e);
     }
     return false;
 }
@@ -183,8 +194,9 @@ bool mysql::updateStatus() {
 
         return true;
 
-    } catch(std::exception e) {
-        cerr << "mysql error: " << e.what() << endl;
+    } catch(SQLite::Exception e) {
+        cerr << "Error while trying to update status" << endl;
+        printError(e);
     }
     return false;
 }
@@ -220,8 +232,9 @@ bool mysql::getCommands(std::string &commands) {
 
         return true;
 
-    } catch(std::exception e) {
-        cerr << "mysql error: " << e.what() << endl;
+    } catch(SQLite::Exception e) {
+        cerr << "Error while trying to get commands" << endl;
+        printError(e);
     }
     return false;
 }

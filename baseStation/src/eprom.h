@@ -3,6 +3,7 @@
 
 
 #include <stdint.h>
+#include <string>
 
 namespace eeprom {
 
@@ -17,6 +18,10 @@ namespace eeprom {
 
         extern unsigned int dailyRain;
 
+    }
+
+    namespace params {
+        extern std::string database;
     }
 
     namespace sql {

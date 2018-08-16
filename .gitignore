@@ -140,3 +140,6 @@ venv.bak/
 *.out
 *.app
 
+# Workspace stuff
+
+*coppermind*
