@@ -9,10 +9,10 @@ IDIR = src
 SRCDIR = src
 # .o directory
 ODIR=bin
-LIB_INC=-I/usr/local/include -Ilib/SQLiteCpp/include
+LIB_INC=-I/usr/local/include
 LIB=-L/usr/local/lib -L/usr/lib
-LIBS=-lrf24 -lwiringPi -lsqlite3 -lsystemd
-LINKS=lib/SQLiteCpp/build/libSQLiteCpp.a
+LIBS=-lrf24 -lwiringPi -lmariadbclient -lmysqlcppconn -lsystemd
+LINKS=
 
 PROG_NAME=baseStation
 

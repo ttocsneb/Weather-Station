@@ -4,17 +4,9 @@
 #include <string>
 #include <stdint.h>
 
-// I am changing the connecter to use SQLite instead: https://github.com/SRombauts/SQLiteCpp
+//MySQL Connector/C++ Documentation: https://dev.mysql.com/doc/dev/connector-cpp/8.0/
 
 namespace mysql {
-
-    /**
-     * Setup the SQL namespace.
-     * 
-     * @note should be called after eeprom is loaded.
-     * 
-     */
-    void begin();
 
     /**
      * Add an entry to the weather.data SQL table
@@ -50,6 +42,17 @@ namespace mysql {
      * @return true if successful
      **/
     bool updateStatus();
+
+    /**
+     * Commit the changes to the SQL database
+     * 
+     * This should be called last after all other actions 
+     * have been made, as the connection is deleted after
+     * the changes are commited.
+     * 
+     * @return true if successful
+     */
+    bool commit();
 
     /**
      * Load the commands from the SQL weather.commands table

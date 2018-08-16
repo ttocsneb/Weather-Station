@@ -55,25 +55,6 @@ void gotStatus() {
     mysql::updateStatus();
 }
 
-/**
- * upload the weather data to wunderground
- * 
- * Also add a weather.data item to the SQL Server
- */
-void uploadWeather() {
-    D(cout << "Uploading WeatherData:" << endl);
-
-    mysql::addWeatherData();
-    mysql::minifyWeatherData(5);
-    mysql::pruneWeatherData();
-
-    //upload the data
-    std::string output = global::exec("./upload");
-
-    D(cout << output << std::flush);
-    D(cout << "done" << endl);
-}
-
 int main(int argc, char** argv) {
     std::chrono::system_clock::time_point startupTime = system_clock::now();
 
@@ -85,8 +66,6 @@ int main(int argc, char** argv) {
     eeprom::resets++;
     commands::status::base::resets = eeprom::resets;
     eeprom::setEEPROM();
-
-    mysql::begin();
 
     weather::begin();
 
@@ -118,9 +97,6 @@ int main(int argc, char** argv) {
                 commands::getStatus(&gotStatus);
             }
 
-            uploadWeather();
-
-            
             commands::getMysqlCommands();
 
             currentState = true;
@@ -135,6 +111,7 @@ int main(int argc, char** argv) {
             commands::getStatus(&gotStatus);
         }
         
+        mysql::commit();
         sleep_until(t);
     }
 
@@ -145,21 +122,6 @@ int main(int argc, char** argv) {
 
 void global::begin() {
     pinMode(LIGHT_PIN, OUTPUT);
-}
-
-std::string global::exec(const char* cmd) {
-    std::array<char, 128> buffer;
-    std::string result;
-//Prevent my editor from complaining about popen()
-#ifndef _WIN32
-    std::shared_ptr<FILE> pipe(popen(cmd, "r"), pclose);
-    if(!pipe) throw std::runtime_error("popen() failed!");
-    while(!feof(pipe.get())) {
-        if(fgets(buffer.data(), 128, pipe.get()) != nullptr)
-            result += buffer.data();
-    }
-#endif
-    return result;
 }
 
 bool lightValue = false;

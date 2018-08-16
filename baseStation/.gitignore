@@ -5,3 +5,5 @@ baseStation
 *.log
 __*
 *coppermind.sh
+
+updatemake

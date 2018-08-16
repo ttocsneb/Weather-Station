@@ -16,6 +16,3 @@
 [submodule "Weather Station/lib/FaBoBarometer-MPL115-Library"]
 	path = Weather Station/lib/FaBoBarometer-MPL115-Library
 	url = https://github.com/FaBoPlatform/FaBoBarometer-MPL115-Library.git
-[submodule "baseStation/lib/SQLiteCpp"]
-	path = baseStation/lib/SQLiteCpp
-	url = https://github.com/SRombauts/SQLiteCpp.git
