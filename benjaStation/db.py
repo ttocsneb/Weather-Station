@@ -9,6 +9,9 @@ from sqlalchemy.orm import sessionmaker
 
 Base = declarative_base()
 
+# http://docs.sqlalchemy.org/en/latest/dialects/mysql.html
+# https://pymysql.readthedocs.io/en/latest/user/index.html
+
 
 class data(Base):
     __tablename__ = 'data'
@@ -70,8 +73,17 @@ class commands(Base):
 
 class Database:
 
-    def __init__(self, databse: str):
-        self.engine = create_engine('sqlite:///{0}'.format(databse))
+    def __init__(self, database: str, user: str, password=''):
+
+        if password != '':
+            password = ':' + password
+
+        self.engine = create_engine(
+            'mysql+pymysql://{user}{passw}@{db}/weather'.format(
+                user=user,
+                db=database,
+                passw=password),
+            pool_recycle=3600)
 
         Base.metadata.create_all(self.engine)
         Base.metadata.bind = self.engine

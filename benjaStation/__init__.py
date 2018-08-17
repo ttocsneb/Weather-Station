@@ -21,23 +21,19 @@ class BenjaStation(types.StartupPlugin,
         # Setup settings
 
         # Temporary thing to prevent pylint errors
-        # self._config = Config('foo')
+        # self._config = Config('foo')  # TODO comment out
 
         self._logger.info('current file %s', __file__)
 
         if self.__class__.CONFIG_NAME not in self._config:
             self._load_defaults()
 
-        database_file = os.path.join(self._data_folder, 'weather.db')
+        config = self._config[self.__class__.CONFIG_NAME]
 
-        self._database = db.Database(database_file)
-
-        # Set the starting parameters for the daemon
-        params = open(os.path.join(os.path.dirname(__file__),
-                                   self.__class__.DAEMON_FOLDER, '.params'),
-                      'w')
-
-        params.write('database {0}\n'.format(database_file))
+        # Set up the database
+        self._database = db.Database(config.get('dbServer', 'localhost'),
+                                     config['user'],
+                                     config.get('password', ''))
 
     def on_after_startup(self):
         self._logger.info("Starting BenjaStation!")
@@ -51,6 +47,9 @@ class BenjaStation(types.StartupPlugin,
     def _load_defaults(self):
         self._logger.info("No configuration setup, loading defaults")
         config = dict()
+
+        config['user'] = 'blue'
+        config['dbServer'] = 'localhost'
 
         self._config[self.__class__.CONFIG_NAME] = config
         self._config.save()
