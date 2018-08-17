@@ -1,4 +1,3 @@
-import os
 import datetime
 
 from sqlalchemy import Column, Integer, DateTime, Float, Boolean, String
@@ -52,7 +51,7 @@ class graphdata(Base):
 class status(Base):
     __tablename__ = 'status'
 
-    id = Column(Integer, primary_key=True)
+    date = Column(DateTime, primary_key=True, default=datetime.datetime.utcnow)
     battery = Column(Float, nullable=False)
     is_charging = Column(Boolean, nullable=False)
     time_charging = Column(Integer, nullable=False)
@@ -74,6 +73,7 @@ class commands(Base):
 class Database:
 
     def __init__(self, database: str, user: str, password=''):
+        self._connect = None
 
         if password != '':
             password = ':' + password
