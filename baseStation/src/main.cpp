@@ -55,6 +55,21 @@ void gotStatus() {
     mysql::updateStatus();
 }
 
+/**
+ * upload the weather data to wunderground
+ * 
+ * Also add a weather.data item to the SQL Server
+ */
+void uploadWeather() {
+    D(cout << "Uploading WeatherData:" << endl);
+
+    mysql::addWeatherData();
+    mysql::minifyWeatherData(5);
+    mysql::pruneWeatherData();
+
+    D(cout << "done" << endl);
+}
+
 int main(int argc, char** argv) {
     std::chrono::system_clock::time_point startupTime = system_clock::now();
 
@@ -96,6 +111,8 @@ int main(int argc, char** argv) {
                 lastStatusTime = system_clock::now();
                 commands::getStatus(&gotStatus);
             }
+
+            uploadWeather();
 
             commands::getMysqlCommands();
 
