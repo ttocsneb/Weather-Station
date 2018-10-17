@@ -40,106 +40,64 @@ void initCommand(uint8_t size, Command &c) {
     commands.push(c);
 }
 
-void getValue(uint8_t* data) {
-    #define SET(size, val) c.command[0] = COMMAND_GET_VALUE; \
-                           c.command[1] = data[1]; \
-                           (size == 1 ? main::set8(c.command + 2, val) : \
-                           (size == 2 ? main::set16(c.command + 2, val) : \
-                           main::set32(c.command + 2, val)))
-    Command c;
-
-    if(*data == COMMAND_GET_VALUE) {
-        switch(data[1]) {
-        case ALIAS_WIND_TICK:
-            initCommand(WIND_TICK_SIZE, c);
-            SET(WIND_TICK_SIZE, eeprom::wind::ticks);
-            return;
-        case ALIAS_WIND_READ_TIME:
-            initCommand(WIND_READ_TIME_SIZE, c);
-            SET(WIND_READ_TIME_SIZE, eeprom::wind::readTime);
-            return;
-        case ALIAS_WIND_AVG_UPDATE_TIME:
-            initCommand(WIND_AVG_UPDATE_TIME_SIZE, c);
-            SET(WIND_AVG_UPDATE_TIME_SIZE, eeprom::wind::averageUpdateTime);
-            return;
-        case ALIAS_WIND_AVG_STORAGE_TIME:
-            initCommand(WIND_AVG_STORAGE_TIME_SIZE, c);
-            SET(WIND_AVG_STORAGE_TIME_SIZE, eeprom::wind::averageStorageTime);
-            return;
-        case ALIAS_PRES_ALTITUDE:
-            initCommand(PRES_ALTITUDE_SIZE, c);
-            SET(PRES_ALTITUDE_SIZE, eeprom::pressure::altitude);
-            return;
-        case ALIAS_REFRESH_TIME:
-            initCommand(REFRESH_TIME_SIZE, c);
-            SET(REFRESH_TIME_SIZE, eeprom::refreshTime);
-            return;
-        }
-    }
-}
 
 /**
  * Set an eeprom value with the given data array
- *
- * @return number of bytes used
  */
-uint8_t setValue(uint8_t* data) {
-#define getX(x, y) (x == 1 ? main::get8(y) : (x == 2 ? main::get16(y) : main::get32(y)))
+void setValue(uint8_t* data) {
+    long value = main::get32(data + 1);
 
     switch(*data) {
-    case ALIAS_WIND_TICK:
-        eeprom::wind::ticks = getX(WIND_TICK_SIZE, data + 1);
-        return WIND_TICK_SIZE + 1;
-    case ALIAS_WIND_READ_TIME:
-        eeprom::wind::readTime = getX(WIND_READ_TIME_SIZE, data + 1);
-        return WIND_READ_TIME_SIZE + 1;
-    case ALIAS_WIND_AVG_UPDATE_TIME:
-        eeprom::wind::averageUpdateTime = getX(WIND_AVG_UPDATE_TIME_SIZE, data + 1);
-        return WIND_AVG_UPDATE_TIME_SIZE + 1;
-    case ALIAS_WIND_AVG_STORAGE_TIME:
-        eeprom::wind::averageStorageTime = getX(WIND_AVG_STORAGE_TIME_SIZE, data + 1);
-        return WIND_AVG_STORAGE_TIME_SIZE + 1;
-    case ALIAS_PRES_ALTITUDE:
-        eeprom::pressure::altitude = getX(PRES_ALTITUDE_SIZE, data + 1);
-        return PRES_ALTITUDE_SIZE + 1;
-    case ALIAS_REFRESH_TIME:
-        eeprom::refreshTime = getX(REFRESH_TIME_SIZE, data + 1);
-        return REFRESH_TIME_SIZE + 1;
+    case REFRESH_TIME:
+        eeprom::refresh_time = value;
+    case LISTEN_TIME:
+        eeprom::listen_time = value;
+    case ALTITUDE:
+        eeprom::pressure::altitude = value;
+    case AVG_WIND_UPDATE:
+        eeprom::wind::average_update = value;
+    case AVG_WIND_STORAGE:
+        eeprom::wind::average_storage = value;
+    case WIND_UPDATE:
+        eeprom::wind::update = value;
+    case WIND_STORAGE:
+        eeprom::wind::storage = value;
     }
-    return 1;
 }
 
+
 void sendCommands() {
-    uint8_t packets[PACKET_SIZE];
     while(!commands.isEmpty()) {
         uint8_t i = 0;
 
-        Command com = commands.front();
+        Command com;
         while(!commands.isEmpty() && i + com.size < PACKET_SIZE) {
             com = commands.front();
-            uint8_t ind = com.size;
-            while(ind--) {
-                packets[i + ind] = com.command[ind];
+
+            // Send the command to the basestation
+            if(!radio::radio.write(com.command, com.size)) {
+                // If the command failed to send, don't send anymore,
+                // and don't delete the failed command
+                return;
             }
-            i += com.size;
+
+            // Remove the Command
             delete[] com.command;
             commands.pop();
         }
-        packets[i] = EOT;
-
-        if(!radio::radio.write(packets, PACKET_SIZE)) {
-            return;
-        }
     }
 }
+
 
 void radio::update() {
 
     static unsigned long updateTime(0);
 
-    //send an update to the base station every [eeprom::refreshTime] ms
-    if(millis() - updateTime > eeprom::refreshTime) {
-        updateTime = millis();
+    unsigned long current_time = millis();
+
+    //send an update to the base station every [eeprom::refresh_time] ms
+    if(current_time - updateTime > eeprom::refresh_time) {
+        updateTime = current_time;
 
         digitalWrite(LED, HIGH);
 
@@ -149,7 +107,8 @@ void radio::update() {
 
         //load the packet
         uint8_t data[PACKET_SIZE];
-        sensors::loadPacket(data);
+        data[0] = COMMAND_GET_WEATHER;
+        sensors::loadPacket(data + 1);
 
         //send the packet to the base station, if it fails, try [RETRIES] more times
         bool success = false;
@@ -158,6 +117,7 @@ void radio::update() {
             success = radio.write(data, PACKET_SIZE);
             delay(50);
         }
+
         //add 1 to lostpackets if the packet couldn't be sent
         if(success) {
             sensors::reset();
@@ -183,38 +143,55 @@ void radio::update() {
             while(radio.available()) {
                 radio.read(data, PACKET_SIZE);
 
-                //commands can be nested in packets, process each command
+                uint8_t command = data[0];
 
-                uint8_t i = 0;
-                while(data[i] != EOT && i < PACKET_SIZE) {
-                    if(data[i] == COMMAND_SET_VALUE) {
-                        DEBUG_PRINTLN("Got Command Set Value");
-                        i += setValue(data + i + 1);
-                    } else if(data[i] == COMMAND_SET_EEPROM) {
-                        DEBUG_PRINTLN("Got Command Set EEPROM");
-                        eeprom::setEEPROM();
-                    } else if(data[i] == COMMAND_LOAD_EEPROM) {
-                        DEBUG_PRINTLN("Got Command Load EEPROM");
-                        eeprom::loadEEPROM();
-                    } else if(data[i] == COMMAND_GET_VALUE) {
-                        DEBUG_PRINTLN("Got Command Get Value");
-                        getValue(data + i);
-                        i++;
-                    } else if(data[i] == COMMAND_GET_STATUS) {
-                        DEBUG_PRINTLN("Got Command Get Status");
-                        Command c;
-                        c.size = main::getStatusSize() + 1;
-                        c.command = new uint8_t[c.size];
-                        c.command[0] = COMMAND_GET_STATUS;
-                        main::loadStatus(c.command + 1);
-                        commands.push(c);
-                    } else if(data[i] == COMMAND_RESET) {
-                        DEBUG_PRINTLN("Got Command Reset");
-                        main::reset();
-                    }
-                    i++;
+                if(command == COMMAND_GET_WEATHER) {
+                    DEBUG_PRINTLN("Got Command get_weather");
+
+                    Command c;
+                    c.size = 17;
+                    c.command = new uint8_t[c.size];
+                    c.command[0] = COMMAND_GET_WEATHER;
+                    sensors::loadPacket(c.command + 1);
+                    commands.push(c);
+                } else if(command == COMMAND_GET_SETTINGS) {
+                    DEBUG_PRINTLN("Got Command get_settings");
+
+                    Command c;
+                    c.size = 19;
+                    c.command = new uint8_t[c.size];
+                    c.command[0] = COMMAND_GET_SETTINGS;
+                    eeprom::loadPacket(c.command + 1);
+                    commands.push(c);
+                    // TODO: Implement Get Settings Command
+                } else if(command == COMMAND_GET_STATUS) {
+                    DEBUG_PRINTLN("Got Command get_status");
+
+                    Command c;
+                    c.size = 6;
+                    c.command = new uint8_t[c.size];
+                    c.command[0] = COMMAND_GET_STATUS;
+                    main::loadStatus(c.command + 1);
+                    commands.push(c);
+                } else if(command == COMMAND_SET_SETTINGS) {
+                    DEBUG_PRINTLN("Got Command set_settings");
+
+                    setValue(data + 1);
+                    eeprom::setEEPROM();
+                } else if (command == COMMAND_RESET) {
+                    DEBUG_PRINTLN("Got Command reset");
+
+                    sensors::reset();
+                } else if (command == COMMAND_RESET_STATUS) {
+                    DEBUG_PRINTLN("Got Command reset_status");
+                    main::reset();
+                } else if (command == COMMAND_RESET_SETTINGS) {
+                    DEBUG_PRINTLN("Got Command reset_settings");
+                    eeprom::reset();
+                } else if (command == COMMAND_RESTART) {
+                    DEBUG_PRINTLN("Got Command reset_restart");
+                    main::restart();
                 }
-                
             }
 
             if(!commands.isEmpty()) {
@@ -229,7 +206,7 @@ void radio::update() {
         }
 
         //stop listening for commands and power down after [LISTEN_TIME] ms
-        if(active && millis() - updateTime > LISTEN_TIME) {
+        if(active && millis() - updateTime > eeprom::listen_time) {
             active = false;
             radio.stopListening();
             radio.powerDown();

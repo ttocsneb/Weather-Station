@@ -3,21 +3,27 @@
 #include "queue.h"
 #include "eprom.h"
 
+
 DHT sensors::dht(DHTPIN, DHTTYPE);
 FaBoBarometer sensors::baro;
+
 
 uint16_t sensors::maxWind;
 uint16_t sensors::maxDirection;
 uint16_t sensors::averageWind;
 uint16_t sensors::averageDirection;
 
+
 volatile uint8_t sensors::rain;
+
 
 QueueArray<uint8_t> windTick;
 QueueArray<uint16_t> averageSpeed;
 QueueArray<uint8_t> averageDir;
 
-uint16_t rpm;
+
+uint16_t ticks;
+
 
 void sensors::begin() {
     dht.begin();
@@ -30,51 +36,59 @@ void sensors::begin() {
     reset();
 
     //fill the queue with empty data
-    uint8_t s = eeprom::wind::ticks;
+    uint8_t s = eeprom::wind::queue_size;
     while(s--) {
         DEBUG_PRINTLN(s);
         windTick.push(0);
     }
 
-    s = eeprom::wind::averageTimeN;
+    s = eeprom::wind::average_queue_size;
     uint8_t dir = getWindDirection() / 45;
     while(s--) {
         averageSpeed.push(0);
         averageDir.push(dir);
     }
-
 }
+
 
 uint8_t sensors::getRainFall() {
     return rain;
 }
 
+
 int16_t sensors::getTemperature() {
     return static_cast<int16_t>(dht.readTemperature() * 10);
 }
 
+
 uint16_t sensors::getHumidity() {
-    return static_cast<int16_t>(dht.readHumidity() * 10);
+    return static_cast<int16_t>(dht.readHumidity());
 }
+
 
 uint16_t sensors::getPressure() {
     return baro.readHpa(eeprom::pressure::altitude) * 10;
 }
 
+
+
 void sensors::update() {
     static bool lastWindState(false);
-    static long lastWindTime(0);
 
+    static long lastWindUpdate(0);
     static long lastAverageUpdate(0);
 
-    //calculate rpm
-    if(millis() - lastWindTime > eeprom::wind::tickDelay) {
-        lastWindTime = millis();
-        rpm = 0;
+    long current_time = millis();
+
+    // Update the current windtick
+    if(current_time - lastWindUpdate > eeprom::wind::update) {
+        lastWindUpdate = current_time;
+        ticks = 0;
         for(uint8_t i = 0; i < windTick.count(); i++) {
-            rpm += windTick[i];
+            ticks += windTick[i];
         }
-        rpm *= eeprom::wind::tickMultiplier;
+
+        ticks /= windTick.count();
 
         if(getWindSpeed() > maxWind) {
             maxWind = getWindSpeed();
@@ -85,15 +99,10 @@ void sensors::update() {
         windTick.push(0);
     }
 
-    if(lastWindState != digitalRead(WIND)) {
-        lastWindState = !lastWindState;
-        if(lastWindState) {
-            windTick[windTick.count() - 1] = windTick[windTick.count() - 1] + 1;
-        }
-    }
-
-    if(millis() - lastAverageUpdate > eeprom::wind::averageUpdateTime) {
-        lastAverageUpdate = millis();
+    // Update the current Average tick
+    if(current_time - lastAverageUpdate > eeprom::wind::average_update) {
+        lastAverageUpdate = current_time;
+        // discard the oldest average tick, and add the newest
         averageSpeed.pop();
         averageSpeed.push(getWindSpeed());
         averageDir.pop();
@@ -107,15 +116,27 @@ void sensors::update() {
         }
         averageWind /= averageSpeed.count();
         averageDirection = (averageDirection * 45) / averageSpeed.count();
-
     }
 
 
+    // Wait until either the windstate changes, or the shortest timer elapses.
+    // This should be the only source of delay in the program
+    while(lastWindState == digitalRead(WIND) && millis() - current_time < eeprom::shortest_delay) delayMicroseconds(500);
+
+    // If the windstate has changed, log it the the current wind_tick
+    if(lastWindState != digitalRead(WIND)) {
+        lastWindState = !lastWindState;
+        if(lastWindState) {
+            windTick[windTick.count() - 1] += 1;
+        }
+    }
 }
 
-uint16_t sensors::getWindSpeed() {
-    return rpm;
+
+uint8_t sensors::getWindSpeed() {
+    return ticks;
 }
+
 
 #define north     554
 #define northeast 226
@@ -125,6 +146,7 @@ uint16_t sensors::getWindSpeed() {
 #define southwest 366
 #define west      0
 #define northwest 692
+
 
 uint16_t sensors::getWindDirection() {
     do {
@@ -160,21 +182,26 @@ uint16_t sensors::getWindDirection() {
     } while(true);
 }
 
+
 uint16_t sensors::getMaxWindSpeed() {
     return maxWind;
 }
+
 
 uint16_t sensors::getMaxWindDirection() {
     return maxDirection;
 }
 
+
 uint16_t sensors::getAverageWindSpeed() {
     return averageWind;
 }
 
+
 uint16_t sensors::getAverageWindDirection() {
     return averageDirection;
 }
+
 
 ISR(PCINT0_vect) {
     static long lastTime(0);
@@ -184,7 +211,6 @@ ISR(PCINT0_vect) {
         rainTick = true;
     }
     if(digitalRead(RAIN) != 0 && rainTick == true) {
-        DEBUG_PRINTLN(millis() - lastTime);
         lastTime = millis();
         rainTick = false;
         DEBUG_PRINTLN("RainTick!");
@@ -192,19 +218,22 @@ ISR(PCINT0_vect) {
     }
 }
 
-void sensors::loadPacket(uint8_t* packet) {
-    main::set16(packet + WIND_SPEED_LOC, getWindSpeed());
-    main::set16(packet + WIND_DIREC_LOC, getWindDirection());
-    main::set16(packet + WIND_MAX_SPEED_LOC, getMaxWindSpeed());
-    main::set16(packet + WIND_MAX_DIREC_LOC, getMaxWindDirection());
-    main::set16(packet + WIND_AVG_SPEED_LOC, getAverageWindSpeed());
-    main::set16(packet + WIND_AVG_DIREC_LOC, getAverageWindDirection());
 
-    main::set16(packet + HUMIDITY_LOC, getHumidity());
-    main::set16(packet + TEMPERATURE_LOC, getTemperature());
+void sensors::loadPacket(uint8_t* packet) {
+    main::set8(packet + WIND_DIREC_LOC, getWindDirection() / 45);
+    main::set8(packet + WIND_MAX_DIREC_LOC, getMaxWindDirection() / 45);
+    main::set16(packet + WIND_AVG_DIREC_LOC, getAverageWindDirection());
+    main::set16(packet + WIND_SPEED_LOC, getWindSpeed());
+    main::set16(packet + WIND_MAX_SPEED_LOC, getMaxWindSpeed());
+    main::set16(packet + WIND_AVG_SPEED_LOC, getAverageWindSpeed());
+
     main::set8(packet + RAIN_LOC, getRainFall());
+
+    main::set16(packet + TEMPERATURE_LOC, getTemperature());
+    main::set8(packet + HUMIDITY_LOC, getHumidity());
     main::set16(packet + PRESSURE_LOC, getPressure());
 }
+
 
 void sensors::reset() {
     maxWind = 0;
