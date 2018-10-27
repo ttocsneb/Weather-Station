@@ -62,6 +62,10 @@ void loop() {
 
     main::updateBattery();
     sensors::update();
+
+    if(!resetChip) {
+        wdt_reset();
+    }
 }
 
 

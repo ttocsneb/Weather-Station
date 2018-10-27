@@ -5,7 +5,7 @@
             "intelliSenseMode": "clang-x64",
             "compilerPath": "C:\\MinGW\\bin\\gcc.exe",
             "includePath": [
-                "${workspaceFolder}",
+                "${workspaceFolder}/includes",
                 "${workspaceFolder}/lib",
                 "${workspaceFolder}/lib/RF24",
                 "${workspaceFolder}/lib/wiringPi/wiringPi",
@@ -29,7 +29,11 @@
             "includePath": [
                 "/usr/include",
                 "/usr/local/include",
-                "${workspaceFolder}"
+                "${workspaceFolder}/includes",
+                "${workspaceFolder}/lib",
+                "${workspaceFolder}/lib/RF24",
+                "${workspaceFolder}/lib/wiringPi/wiringPi",
+                "${workspaceFolder}/lib/SQLiteCpp/include"
             ],
             "defines": [],
             "intelliSenseMode": "clang-x64",
@@ -47,12 +51,7 @@
             "name": "Win32",
             "includePath": [
                 "${workspaceFolder}",
-                "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Tools/MSVC/14.11.25503/include/*",
-                "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Tools/MSVC/14.11.25503/atlmfc/include/*",
-                "C:/Program Files (x86)/Windows Kits/10/Include/10.0.16299.0/um",
-                "C:/Program Files (x86)/Windows Kits/10/Include/10.0.16299.0/ucrt",
-                "C:/Program Files (x86)/Windows Kits/10/Include/10.0.16299.0/shared",
-                "C:/Program Files (x86)/Windows Kits/10/Include/10.0.16299.0/winrt",
+                "${workspaceFolder}/includes",
                 "${workspaceFolder}/lib",
                 "${workspaceFolder}/lib/RF24",
                 "${workspaceFolder}/lib/wiringPi/wiringPi",
@@ -63,7 +62,8 @@
                 "UNICODE",
                 "_UNICODE"
             ],
-            "intelliSenseMode": "msvc-x64",
+            "intelliSenseMode": "clang-x64",
+            "compilerPath": "C:\\MinGW\\bin\\gcc.exe -fno-ms-extensions",
             "browse": {
                 "path": [
                     "${workspaceFolder}",

@@ -12,26 +12,23 @@
 using std::cout;
 using std::endl;
 
-uint8_t commands::station::wind::ticks;
-uint16_t commands::station::wind::readTime;
+TYPE_WIND_UPDATE commands::eeprom::wind::wind_update;
+TYPE_WIND_STORAGE commands::eeprom::wind::wind_storage;
 
-uint16_t commands::station::wind::averageUpdateTime;
-uint32_t commands::station::wind::averageStorageTime;
+TYPE_AVG_WIND_UPDATE commands::eeprom::wind::avg_wind_update;
+TYPE_AVG_WIND_STORAGE commands::eeprom::wind::avg_wind_storage;
 
-uint16_t commands::station::pressure::altitude;
+TYPE_ALTITUDE commands::eeprom::pressure::altitude;
 
-uint32_t commands::station::refreshTime;
+TYPE_REFRESH_TIME commands::eeprom::refresh_time;
+TYPE_LISTEN_TIME commands::eeprom::listen_time;
 
-uint16_t commands::status::lostPackets;
-uint16_t commands::status::chargingTime;
-bool commands::status::isCharging;
-float commands::status::batteryVoltage;
-uint8_t commands::status::numResets;
-uint32_t commands::status::uptime;
-bool commands::status::isReporting;
 
-uint32_t commands::status::base::uptime;
-uint16_t commands::status::base::resets;
+bool commands::status::just_started;
+bool commands::status::charging;
+float commands::status::battery;
+float commands::status::battery_temp;
+uint8_t commands::status::lost_packets;
 
 //==================== Command Queue ====================
 
@@ -45,7 +42,7 @@ struct Command {
 };
 
 std::queue<Command> qCommands;
-std::queue<commands::EEPROM_Got> getSuccess;
+commands::EEPROM_Got eepromSuccess;
 commands::Status_got statusSuccess;
 
 Command addCommand(uint8_t size, bool expectReply) {
@@ -79,11 +76,10 @@ template void commands::setEEPROM<uint8_t>(EEPROM_Variable variable, uint8_t val
 template void commands::setEEPROM<uint16_t>(EEPROM_Variable variable, uint16_t value);
 template void commands::setEEPROM<uint32_t>(EEPROM_Variable variable, uint32_t value);
 
-void commands::getEEPROM(EEPROM_Variable variable, commands::EEPROM_Got success) {
-    Command c = addCommand(2, true);
-    c.command[0] = COMMAND_GET_VALUE;
-    c.command[1] = variable;
-    getSuccess.push(success);
+void commands::getEEPROM(commands::EEPROM_Got success) {
+    Command c = addCommand(1, true);
+    c.command[0] = COMMAND_GET_SETTINGS;
+    eepromSuccess = success;
 }
 
 void commands::getStatus(commands::Status_got success) {
@@ -92,15 +88,26 @@ void commands::getStatus(commands::Status_got success) {
     statusSuccess = success;
 }
 
-void commands::saveEEPROM() {
+void commands::resetWeather() {
     Command c = addCommand(1, false);
-    *c.command = COMMAND_SET_EEPROM;
+    *c.command = COMMAND_RESET;
 }
 
-void commands::loadEEPROM() {
+void commands::resetStatus() {
     Command c = addCommand(1, false);
-    *c.command = COMMAND_LOAD_EEPROM;
+    *c.command = COMMAND_RESET_STATUS;
 }
+
+void commands::restart() {
+    Command c = addCommand(1, false);
+    *c.command = COMMAND_RESTART;
+}
+
+void commands::resetEEPROM() {
+    Command c = addCommand(1, false);
+    *c.command = COMMAND_RESET_SETTINGS;
+}
+
 
 //==================== Process COmmands ====================
 
@@ -117,231 +124,92 @@ void commands::loadEEPROM() {
 #define RESETS_SIZE 1
 
 /**
- * Get value from commands::getEEPROM()
- * 
- * @param data location of data
- * 
- * @return number of bytes in command
- */
-uint8_t getValue(const uint8_t* data) {
-#define GET(size) (size == 1 ? global::get<uint8_t>(data + 1) : \
-        (size == 2 ? global::get<uint16_t>(data + 1) : \
-        global::get<uint32_t>(data + 1)))
-#define GET_NOTIFY(type) if(getSuccess.front())(*getSuccess.front())(type); \
-        getSuccess.pop()
-    
-    switch(*data) {
-    case ALIAS_WIND_TICK:
-        commands::station::wind::ticks = GET(WIND_TICK_SIZE);
-        GET_NOTIFY(ALIAS_WIND_TICK);
-        return WIND_TICK_SIZE;
-    case ALIAS_WIND_READ_TIME:
-        commands::station::wind::readTime = GET(WIND_READ_TIME_SIZE);
-        GET_NOTIFY(ALIAS_WIND_READ_TIME);
-        return WIND_READ_TIME_SIZE;
-    case ALIAS_WIND_AVG_UPDATE_TIME:
-        commands::station::wind::averageUpdateTime = GET(WIND_AVG_UPDATE_TIME_SIZE);
-        GET_NOTIFY(ALIAS_WIND_AVG_UPDATE_TIME);
-        return WIND_AVG_UPDATE_TIME_SIZE;
-    case ALIAS_WIND_AVG_STORAGE_TIME:
-        commands::station::wind::averageStorageTime = GET(WIND_AVG_STORAGE_TIME_SIZE);
-        GET_NOTIFY(ALIAS_WIND_AVG_STORAGE_TIME);
-        return WIND_AVG_STORAGE_TIME_SIZE;
-    case ALIAS_PRES_ALTITUDE:
-        commands::station::pressure::altitude = GET(PRES_ALTITUDE_SIZE);
-        GET_NOTIFY(ALIAS_PRES_ALTITUDE);
-        return PRES_ALTITUDE_SIZE;
-    case ALIAS_REFRESH_TIME:
-        commands::station::refreshTime = GET(REFRESH_TIME_SIZE);
-        GET_NOTIFY(ALIAS_REFRESH_TIME);
-        return REFRESH_TIME_SIZE;
-    }
-    return 0;
-
-#undef GET
-#undef GET_NOTIFY
-}
-
-/**
  * Get status from commands::getStatus()
  * 
  * @param data location of data
  * 
- * @return number of bytes in command
  */
-uint8_t readStatus(const uint8_t* data) {
-    const uint8_t LOSTPACKETS_LOC = 0;
-    const uint8_t CHARGING_TIME_LOC = 2;
-    const uint8_t IS_CHARGING_LOC = 4;
-    const uint8_t IS_CHARGING_LOCBIN = 0;
-    const uint8_t BATTERY_LOC = 5;
-    const uint8_t RESETS_LOC = 6;
-    const uint8_t UPTIME_LOC = 7;
+void readStatus(const uint8_t* data) {
+    const uint8_t BOOLEANS = 0;
 
-    //location of last item plus its size
-    const uint8_t STATUS_SIZE = UPTIME_LOC + 4;
+    const uint8_t JUST_STARTED_BIN = 0;
+    const uint8_t CHARGING_BIN = 1;
 
-    commands::status::lostPackets = global::get<uint16_t>(data + LOSTPACKETS_LOC);
-    commands::status::chargingTime = global::get<uint16_t>(data + CHARGING_TIME_LOC);
-    commands::status::isCharging = global::getBool(data + IS_CHARGING_LOC, IS_CHARGING_LOCBIN);
-    commands::status::batteryVoltage = global::get<uint8_t>(data + BATTERY_LOC) / 50.0;
-    commands::status::numResets = global::get<uint8_t>(data + RESETS_LOC);
-    commands::status::uptime = global::get<uint32_t>(data + UPTIME_LOC);
+    const uint8_t BATTERY = 1;
+    const uint8_t BATT_TEMP = 2;
+    const uint8_t LOST_PACKETS = 4;
+
+    commands::status::just_started = global::getBool(data + BOOLEANS, JUST_STARTED_BIN);
+    commands::status::charging = global::getBool(data + BOOLEANS, CHARGING_BIN);
+
+    // load and convert the battery voltage/temperature
+    uint8_t batt = global::get<uint8_t>(data + BATTERY);
+    commands::status::battery = (batt / 100.0) + 1.65;
+    int16_t batt_temp = global::get<int16_t>(data + BATT_TEMP);
+    commands::status::battery_temp = batt_temp / 10.0;
+
+    commands::status::lost_packets = global::get<uint8_t>(data + LOST_PACKETS);
 
     if(statusSuccess) {
         (*statusSuccess)();
     }
-
-    return STATUS_SIZE;
-
 }
 
-bool commands::loadCommands(uint8_t* packet, uint8_t size) {
+/**
+ * Get EEPROM from commands::getEEPROM()
+ */
+bool readEEPROM(const uint8_t* data) {
+    const uint8_t WEATHER_INTERVAL = 0;
+    const uint8_t LISTEN_TIME = 4;
+    const uint8_t ALTITUDE = 6;
+    const uint8_t AVG_WIND_UPDATE = 8;
+    const uint8_t AVG_WIND_STORAGE = 10;
+    const uint8_t WIND_UPDATE = 14;
+    const uint8_t WIND_STORAGE = 16;
+
+    commands::eeprom::refresh_time = global::get<TYPE_REFRESH_TIME>(data + WEATHER_INTERVAL);
+    commands::eeprom::listen_time = global::get<TYPE_LISTEN_TIME>(data + LISTEN_TIME);
+    commands::eeprom::pressure::altitude = global::get<TYPE_ALTITUDE>(data + ALTITUDE);
+    commands::eeprom::wind::avg_wind_update = global::get<TYPE_AVG_WIND_UPDATE>(data + AVG_WIND_UPDATE);
+    commands::eeprom::wind::avg_wind_storage = global::get<TYPE_AVG_WIND_STORAGE>(data + AVG_WIND_STORAGE);
+    commands::eeprom::wind::wind_update = global::get<TYPE_WIND_UPDATE>(data + WIND_UPDATE);
+    commands::eeprom::wind::wind_storage = global::get<TYPE_WIND_STORAGE>(data + WIND_STORAGE);
+
+    if(eepromSuccess) {
+        (*eepromSuccess)();
+    }
+}
+
+bool commands::loadCommand(uint8_t* packet, uint8_t size) {
     uint8_t i = 0;
     bool expectResponse = false;
-    Command com = qCommands.front();
 
-    D(cout << "Sending commands to Station:" << endl);
-
-    while(!qCommands.empty() && i + com.size < size) {
-
-        cout << "Sending Command: " << *com.command << endl;
-
-        uint8_t ind = com.size;
+    if(!qCommands.empty()) {
+        Command com = qCommands.front();
+        uint8_t ind = size < com.size ? size : com.size;
         while(ind--) {
-            packet[i + ind] = com.command[ind];
+            packet[ind] = com.command[ind];
         }
         if(com.expectReply) {
             expectResponse = true;
         }
-        i += com.size;
         deleteCommand(com);
         qCommands.pop();
-        com = qCommands.front();
     }
-
-    packet[i] = EOT;
 
     return expectResponse;
 }
 
 void commands::getReply(const uint8_t* packet, uint8_t size) {
     uint8_t i = 0;
-    while(packet[i] != EOT && i < size) {
-        if(packet[i] == COMMAND_GET_VALUE) {
-            i += getValue(packet + i + 1);
-            i++;
-        } else if(packet[i] == COMMAND_GET_STATUS) {
-            i += readStatus(packet + i + 1);
-            i++;
-        }
-        i++;
+
+    uint8_t command = packet[0];
+
+    if(command == COMMAND_GET_WEATHER) {
+        //TODO: Process weather command
+    } else if(command == COMMAND_GET_SETTINGS) {
+        //TODO: Process get settings Command
+    } else if(command == COMMAND_GET_STATUS) {
+        readStatus(packet + 1);
     }
-}
-
-//==================== Commands Parser ====================
-
-/**
- * Check if the command is a SetEEPROM Command
- * 
- * If it is, send it.
- * 
- * @param is in stream
- * @param command command
- * 
- * @return true if it was a SetEEPROM command
- */
-bool checkCommandSet(std::istream& is, char command) {
-
-    if(command == COMMAND_SET_VALUE) {
-        #define GET(x) (x == ALIAS_WIND_TICK ? WIND_TICK_SIZE : \
-            (x == ALIAS_WIND_READ_TIME ? WIND_READ_TIME_SIZE : \
-            (x == ALIAS_WIND_AVG_UPDATE_TIME ? WIND_AVG_UPDATE_TIME_SIZE : \
-            (x == ALIAS_WIND_AVG_STORAGE_TIME ? WIND_AVG_STORAGE_TIME_SIZE : \
-            (x == ALIAS_PRES_ALTITUDE ? PRES_ALTITUDE_SIZE : \
-            (x == ALIAS_REFRESH_TIME ? REFRESH_TIME_SIZE : 0))))))
-        
-        //Read the command
-        char variable;
-        int value;
-        is >> variable;
-        is >> value;
-
-        D(cout << "Sending Command: SetEEPROM " << variable << " -> " << value << endl);
-
-        //send the command
-        switch(GET(variable)) {
-        case 1: 
-            commands::setEEPROM<uint8_t>(static_cast<EEPROM_Variable>(variable),
-                static_cast<uint8_t>(value));
-            break;
-        case 2:
-            commands::setEEPROM<uint16_t>(static_cast<EEPROM_Variable>(variable),
-                static_cast<uint16_t>(value));
-            break;
-        case 4:
-            commands::setEEPROM<uint32_t>(static_cast<EEPROM_Variable>(variable),
-                static_cast<uint32_t>(value));
-            break;
-        }
-
-        return true;
-        #undef GET
-    }
-
-    return false;
-}
-
-bool checkSaveEeprom(std::istream& is, char command) {
-
-    if(command == COMMAND_SET_EEPROM) {
-        commands::saveEEPROM();
-
-        D(cout << "Sending Command: SaveEEPROM" << endl);
-
-        return true;
-    }
-
-    return false;
-}
-
-bool checkLoadEeprom(std::istream& is, char command) {
-
-    if(command == COMMAND_LOAD_EEPROM) {
-        commands::loadEEPROM();
-
-        D(cout << "Sending Command: LoadEEPROM" << endl);
-
-        return true;
-    }
-
-    return false;
-}
-
-void commands::getMysqlCommands() {
-
-
-    std::string strings = "";
-
-    if(!mysql::getCommands(strings)) {
-        return;
-    }
-
-    D(cout << "Parsing Commands" << endl);
-
-    std::stringstream in(strings);
-
-    char command;
-
-    while(in >> command) {
-
-        if(checkCommandSet(in, command))
-            continue;
-        if(checkSaveEeprom(in, command))
-            continue;
-        if(checkLoadEeprom(in, command))
-            continue;
-        //TODO: add more commands as needed
-    }
-
 }

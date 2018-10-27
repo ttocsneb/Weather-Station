@@ -64,7 +64,7 @@
         "xlocmes": "cpp",
         "xtree": "cpp"
     },
-    "C_Cpp.intelliSenseEngineFallback":"Enabled",
+    "C_Cpp.intelliSenseEngineFallback": "Disabled",
     "C_Cpp.errorSquiggles": "Enabled",
     "C_Cpp.intelliSenseEngine": "Default",
     "C_Cpp.autocomplete": "Default",
