@@ -2,7 +2,6 @@
 #include "main.h"
 #include "eprom.h"
 #include "radio.h"
-#include "sql.h"
 
 #include <iostream>
 #include <queue>
@@ -12,16 +11,16 @@
 using std::cout;
 using std::endl;
 
-TYPE_WIND_UPDATE commands::eeprom::wind::wind_update;
-TYPE_WIND_STORAGE commands::eeprom::wind::wind_storage;
+TYPE_WIND_UPDATE commands::eeprom::wind::wind_update = 250;
+TYPE_WIND_STORAGE commands::eeprom::wind::wind_storage = 2000;
 
-TYPE_AVG_WIND_UPDATE commands::eeprom::wind::avg_wind_update;
-TYPE_AVG_WIND_STORAGE commands::eeprom::wind::avg_wind_storage;
+TYPE_AVG_WIND_UPDATE commands::eeprom::wind::avg_wind_update = 1000;
+TYPE_AVG_WIND_STORAGE commands::eeprom::wind::avg_wind_storage = 120000;
 
-TYPE_ALTITUDE commands::eeprom::pressure::altitude;
+TYPE_ALTITUDE commands::eeprom::pressure::altitude = 0;
 
-TYPE_REFRESH_TIME commands::eeprom::refresh_time;
-TYPE_LISTEN_TIME commands::eeprom::listen_time;
+TYPE_REFRESH_TIME commands::eeprom::refresh_time = 30000;
+TYPE_LISTEN_TIME commands::eeprom::listen_time = 500;
 
 
 bool commands::status::just_started;
@@ -29,6 +28,19 @@ bool commands::status::charging;
 float commands::status::battery;
 float commands::status::battery_temp;
 uint8_t commands::status::lost_packets;
+
+
+uint16_t commands::weather::rawWindSpeed;
+uint8_t  commands::weather::rawWindDirection;
+uint16_t commands::weather::rawMaxWindSpeed;
+uint8_t  commands::weather::rawMaxWindDirection;
+uint16_t commands::weather::rawAverageWindSpeed;
+uint16_t commands::weather::rawAverageWindDirection;
+
+uint8_t commands::weather::rawHumidity;
+int16_t commands::weather::rawTemperature;
+uint8_t commands::weather::rawRainFall;
+uint16_t commands::weather::rawPressure;
 
 //==================== Command Queue ====================
 
@@ -200,13 +212,30 @@ bool commands::loadCommand(uint8_t* packet, uint8_t size) {
     return expectResponse;
 }
 
+
+void loadRawWeather(const uint8_t* data) {
+
+    commands::weather::rawWindDirection = global::get<uint8_t>(data + 0);
+    commands::weather::rawMaxWindDirection = global::get<uint8_t>(data + 1);
+    commands::weather::rawAverageWindDirection = global::get<uint16_t>(data + 2);
+    commands::weather::rawWindSpeed = global::get<uint16_t>(data + 4);
+    commands::weather::rawMaxWindSpeed = global::get<uint16_t>(data + 6);
+    commands::weather::rawAverageWindSpeed = global::get<uint16_t>(data + 8);
+
+    commands::weather::rawRainFall = global::get<uint8_t>(data + 10);
+    commands::weather::rawTemperature = global::get<uint16_t>(data + 11);
+    commands::weather::rawHumidity = global::get<uint8_t>(data + 13);
+    commands::weather::rawPressure = global::get<uint16_t>(data + 14);
+}
+
+
 void commands::getReply(const uint8_t* packet, uint8_t size) {
     uint8_t i = 0;
 
     uint8_t command = packet[0];
 
     if(command == COMMAND_GET_WEATHER) {
-        //TODO: Process weather command
+        loadRawWeather(packet + 1);
     } else if(command == COMMAND_GET_SETTINGS) {
         //TODO: Process get settings Command
     } else if(command == COMMAND_GET_STATUS) {

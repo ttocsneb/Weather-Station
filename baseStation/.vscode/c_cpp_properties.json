@@ -9,6 +9,7 @@
                 "${workspaceFolder}/lib",
                 "${workspaceFolder}/lib/RF24",
                 "${workspaceFolder}/lib/wiringPi/wiringPi",
+                "C:\\Users\\benja\\AppData\\Local\\Programs\\Python\\Python35-32\\include",
                 "${workspaceFolder}/lib/SQLiteCpp/include"
             ],
             "defines": [
@@ -33,6 +34,7 @@
                 "${workspaceFolder}/lib",
                 "${workspaceFolder}/lib/RF24",
                 "${workspaceFolder}/lib/wiringPi/wiringPi",
+                "C:\\Users\\benja\\AppData\\Local\\Programs\\Python\\Python35-32\\include",
                 "${workspaceFolder}/lib/SQLiteCpp/include"
             ],
             "defines": [],
@@ -55,6 +57,7 @@
                 "${workspaceFolder}/lib",
                 "${workspaceFolder}/lib/RF24",
                 "${workspaceFolder}/lib/wiringPi/wiringPi",
+                "C:\\Users\\benja\\AppData\\Local\\Programs\\Python\\Python35-32\\include",
                 "${workspaceFolder}/lib/SQLiteCpp/include"
             ],
             "defines": [

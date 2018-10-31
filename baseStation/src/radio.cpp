@@ -1,6 +1,5 @@
 #include "radio.h"
 #include "main.h"
-#include "eprom.h"
 #include "commands.h"
 
 #include <iostream>
@@ -21,18 +20,6 @@ const uint8_t BASE_ADDRESS[6] = "WTRbs";
 RF24 rad(CE_PIN, CS_PIN);
 
 bool active;
-
-uint16_t radio::rawWindSpeed;
-uint16_t radio::rawWindDirection;
-uint16_t radio::rawMaxWindSpeed;
-uint16_t radio::rawMaxWindDirection;
-uint16_t radio::rawAverageWindSpeed;
-uint16_t radio::rawAverageWindDirection;
-
-uint16_t radio::rawHumidity;
-int16_t radio::rawTemperature;
-uint8_t radio::rawRainFall;
-uint16_t radio::rawPressure;
 
 void radio::begin() {
     global::light(true);
@@ -65,17 +52,7 @@ bool checkForPacket() {
 
             rad.read(data, PACKET_SIZE);
 
-            radio::rawWindSpeed = global::get<uint16_t>(data + WIND_SPEED_LOC);
-            radio::rawWindDirection = global::get<uint16_t>(data + WIND_DIREC_LOC);
-            radio::rawAverageWindSpeed = global::get<uint16_t>(data + WIND_AVG_SPEED_LOC);
-            radio::rawAverageWindDirection = global::get<uint16_t>(data + WIND_AVG_DIREC_LOC);
-            radio::rawMaxWindSpeed = global::get<uint16_t>(data + WIND_MAX_SPEED_LOC);
-            radio::rawMaxWindDirection = global::get<uint16_t>(data + WIND_MAX_DIREC_LOC);
-
-            radio::rawHumidity = global::get<uint16_t>(data + HUMIDITY_LOC);
-            radio::rawTemperature = global::get<uint16_t>(data + TEMPERATURE_LOC);
-            radio::rawRainFall = global::get<uint8_t>(data + RAIN_LOC);
-            radio::rawPressure = global::get<uint16_t>(data + PRESSURE_LOC);
+            commands::getReply(data, PACKET_SIZE);
 
             return true;
         }
@@ -92,10 +69,15 @@ bool checkForPacket() {
 bool sendPackets() {
     uint8_t packets[PACKET_SIZE];
 
-    bool expectResponse = commands::loadCommands(packets, PACKET_SIZE);
+    bool expectResponse = false;
 
-    if(!rad.write(packets, PACKET_SIZE)) {
-        cerr << "ERROR: Could not send Commands" << endl;
+    while(commands::moreCommands()) {
+        bool expectResponse = commands::loadCommand(packets, PACKET_SIZE) || expectResponse;
+
+        if(!rad.write(packets, PACKET_SIZE)) {
+            cerr << "ERROR: Could not send Command" << endl;
+            return expectResponse;
+        }
     }
 
     return expectResponse;
@@ -120,9 +102,11 @@ void sendCommands() {
     }
 }
 
-bool radio::update(time_point &reloadTime) {
+int radio::update() {
     static unsigned int lost_packets(100);
     bool successfull = false;
+
+    int reloadTime = 0;
 
     global::light(true);
 
@@ -138,15 +122,25 @@ bool radio::update(time_point &reloadTime) {
 
         lost_packets = 0;
 
-        //wait for up to eeprom::refreshTime (30s) for an incomming packet
+        //wait for up to commands::eeprom::refreshTime (30s) for an incomming packet
         time_point t =  Clock::now();
-        while(!successfull && timeDiff(t,  Clock::now()) < eeprom::refreshTime) {
+        while(!successfull && timeDiff(t,  Clock::now()) < commands::eeprom::refreshTime) {
             sleep_for(500ms);
             global::toggleLight();
             successfull = checkForPacket();
         }
         global::light(true);
 
+        
+        //if successful, try to send the commands
+        if(successfull) {
+            lost_packets = std::min(lost_packets - 1, (unsigned int)(0));
+            sendCommands();
+            commands::status::isReporting = true;
+        } else {
+            lost_packets++;
+            commands::status::isReporting = false;
+        }
 
         active = false;
         rad.stopListening();
@@ -154,30 +148,30 @@ bool radio::update(time_point &reloadTime) {
 
         //if a packet was received, wait until the next update time.
         if(successfull) {
-            D(cout << "Packet received, waiting " << (eeprom::refreshTime - eeprom::listenTime / 2) / 1000.0 << " seconds to sync with the station" << endl);
-            reloadTime += (Clock::now() - t) - std::chrono::milliseconds(eeprom::listenTime / 2);
+            D(cout << "Packet received, waiting " << (commands::eeprom::refreshTime - commands::eeprom::listenTime / 2) / 1000.0 << " seconds to sync with the station" << endl);
+            reloadTime = std::chrono::time_point_cast<std::chrono::milliseconds>(Clock::now() - t) - commands::eeprom::listenTime / 2;
 
             //((refresh time - listentime) / 2) - (refresh time - (now - t))
-            return true;
+            return reloadTime;
         }
-        return false;
+        return -1;
     } else {
 
         int8_t count = 0;
 
         //wait for an available packet
         time_point t = Clock::now();
-        while(!successfull && timeDiff(t,  Clock::now()) < eeprom::listenTime) {
+        while(!successfull && timeDiff(t,  Clock::now()) < commands::eeprom::listenTime) {
             sleep_for(500ms);
             successfull = checkForPacket();
             count++;
         }
 
         //If we are desyncing, compensate.
-        count -= (eeprom::listenTime / 500) / 2;
+        count -= (commands::eeprom::listenTime / 500) / 2;
         if(count != 0) {
-            reloadTime += (count * 500ms);
-            cout << "Desynced by " << count * 500 << "ms, adjusting" << endl;
+            reloadTime = (count * 500ms);
+            cout << "Desynced by " << count * 500 << "ms" << endl;
         }
 
         //if successful, try to send the commands
@@ -199,5 +193,5 @@ bool radio::update(time_point &reloadTime) {
 
     global::light(false);
 
-    return successfull;
+    return successfull ? reloadTime : -1;
 }

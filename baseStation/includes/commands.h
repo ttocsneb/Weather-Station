@@ -80,6 +80,20 @@ namespace commands {
         extern uint8_t lost_packets;
     }
 
+    namespace weather {
+        extern uint16_t rawWindSpeed;
+        extern uint8_t rawWindDirection;
+        extern uint16_t rawMaxWindSpeed;
+        extern uint8_t rawMaxWindDirection;
+        extern uint16_t rawAverageWindSpeed;
+        extern uint16_t rawAverageWindDirection;
+
+        extern uint8_t rawHumidity;
+        extern int16_t rawTemperature;
+        extern uint8_t rawRainFall;
+        extern uint16_t rawPressure;
+    }
+
     /**
      * Set an EEPROM variable on the weatherstation
      * 
@@ -151,6 +165,11 @@ namespace commands {
      * @returns true if a reply is expected from the weather station
      */
     bool loadCommand(uint8_t* packet, uint8_t size);
+    /**
+     * Return true if there are more commands to be processed.
+     */
+    bool moreCommands();
+
     /**
      * Load the receiving commands
      * 

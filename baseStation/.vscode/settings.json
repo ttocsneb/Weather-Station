@@ -1,5 +1,7 @@
 {
     "files.associations": {
+        "*.jinja2": "jinja-html",
+        "*.yapsy-plugin": "ini",
         "iostream": "cpp",
         "cstddef": "cpp",
         "iosfwd": "cpp",
@@ -62,9 +64,13 @@
         "xhash": "cpp",
         "xlocbuf": "cpp",
         "xlocmes": "cpp",
-        "xtree": "cpp"
+        "xtree": "cpp",
+        "*.tcc": "cpp",
+        "cctype": "cpp",
+        "clocale": "cpp",
+        "cwctype": "cpp"
     },
-    "C_Cpp.intelliSenseEngineFallback": "Disabled",
+    "C_Cpp.intelliSenseEngineFallback": "Enabled",
     "C_Cpp.errorSquiggles": "Enabled",
     "C_Cpp.intelliSenseEngine": "Default",
     "C_Cpp.autocomplete": "Default",
