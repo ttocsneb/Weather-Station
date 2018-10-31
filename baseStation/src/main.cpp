@@ -16,7 +16,6 @@
 #include "main.h"
 #include "radio.h"
 #include "commands.h"
-#include "sql.h"
 
 
 using std::cout;

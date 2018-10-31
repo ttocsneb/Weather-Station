@@ -2,7 +2,6 @@
 
 #include "main.h"
 #include "radio.h"
-#include "weather.h"
 #include "commands.h"
 
 

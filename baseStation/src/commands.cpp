@@ -1,6 +1,5 @@
 #include "commands.h"
 #include "main.h"
-#include "eprom.h"
 #include "radio.h"
 
 #include <iostream>
