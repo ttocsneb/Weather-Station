@@ -35,7 +35,7 @@ static PyObject* cmd_get_eeprom_wrapper(PyObject* self, PyObject* args) {
 
     PyObject* temp;
 
-    if(PyArg_ParseTuple(args, "O", temp)) {
+    if(PyArg_ParseTuple(args, "O", &temp)) {
         // Raise an exception if the object is not callable
         if(!PyCallable_Check(temp)) {
             PyErr_SetString(PyExc_TypeError, "parameter must be callable");
@@ -119,7 +119,7 @@ static PyObject* cmd_get_status_wrapper(PyObject* self, PyObject* args) {
 
     PyObject* temp;
 
-    if(PyArg_ParseTuple(args, "O", temp)) {
+    if(PyArg_ParseTuple(args, "O", &temp)) {
 
         // Raise an exception if the object is not callable
         if(!PyCallable_Check(temp)) {
@@ -195,7 +195,7 @@ static PyObject* rdo_update_wrapper(PyObject* self, PyObject* args) {
 
     PyObject* succeeded = Py_bool_new(success);
 
-    return PyTuple_Pack(2, success, PyLong_FromLong(delay));
+    return PyTuple_Pack(2, succeeded, PyLong_FromLong(delay));
 }
 
 ////////////// Weather Wrapper //////////////

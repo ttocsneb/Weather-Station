@@ -54,11 +54,6 @@ static PyObject* rdo_update_wrapper(PyObject* self, PyObject* args);
 ////////////// Weather Wrapper //////////////
 
 /**
- * Update the weather after the raw weather has been updated
- */
-static PyObject* wtr_update_wrapper(PyObject* self, PyObject* args);
-
-/**
  * Get the current weather
  */
 static PyObject* wtr_get_weather_wrapper(PyObject* self, PyObject* args);

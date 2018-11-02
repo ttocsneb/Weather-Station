@@ -124,7 +124,7 @@ int radio::update() {
 
         //wait for up to commands::eeprom::refreshTime (30s) for an incomming packet
         time_point t =  Clock::now();
-        while(!successfull && timeDiff(t,  Clock::now()) < commands::eeprom::refreshTime) {
+        while(!successfull && timeDiff(t,  Clock::now()) < commands::eeprom::refresh_time) {
             sleep_for(500ms);
             global::toggleLight();
             successfull = checkForPacket();
@@ -148,10 +148,12 @@ int radio::update() {
 
         //if a packet was received, wait until the next update time.
         if(successfull) {
-            D(cout << "Packet received, waiting " << (commands::eeprom::refreshTime - commands::eeprom::listenTime / 2) / 1000.0 << " seconds to sync with the station" << endl);
-            reloadTime = std::chrono::time_point_cast<std::chrono::milliseconds>(Clock::now() - t) - commands::eeprom::listenTime / 2;
+            D(cout << "Packet received, waiting " << (commands::eeprom::refresh_time - commands::eeprom::listen_time / 2) / 1000.0 << " seconds to sync with the station" << endl);
+            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - t);
 
-            //((refresh time - listentime) / 2) - (refresh time - (now - t))
+            reloadTime = duration.count() - commands::eeprom::listen_time / 2;
+
+            //((refresh time - listen_time) / 2) - (refresh time - (now - t))
             return reloadTime;
         }
         return -1;
@@ -161,16 +163,16 @@ int radio::update() {
 
         //wait for an available packet
         time_point t = Clock::now();
-        while(!successfull && timeDiff(t,  Clock::now()) < commands::eeprom::listenTime) {
+        while(!successfull && timeDiff(t,  Clock::now()) < commands::eeprom::listen_time) {
             sleep_for(500ms);
             successfull = checkForPacket();
             count++;
         }
 
         //If we are desyncing, compensate.
-        count -= (commands::eeprom::listenTime / 500) / 2;
+        count -= (commands::eeprom::listen_time / 500) / 2;
         if(count != 0) {
-            reloadTime = (count * 500ms);
+            reloadTime = (count * 500);
             cout << "Desynced by " << count * 500 << "ms" << endl;
         }
 

@@ -79,7 +79,7 @@ template<typename T>
 void commands::setEEPROM(EEPROM_Variable variable, T value) {
     Command c = addCommand(2 + sizeof(T), false);
 
-    c.command[0] = COMMAND_SET_VALUE;
+    c.command[0] = COMMAND_SET_SETTINGS;
     c.command[1] = variable;
     global::set<T>(c.command + 2, value);
 }
@@ -169,7 +169,7 @@ void readStatus(const uint8_t* data) {
 /**
  * Get EEPROM from commands::getEEPROM()
  */
-bool readEEPROM(const uint8_t* data) {
+void readEEPROM(const uint8_t* data) {
     const uint8_t WEATHER_INTERVAL = 0;
     const uint8_t LISTEN_TIME = 4;
     const uint8_t ALTITUDE = 6;
@@ -192,7 +192,6 @@ bool readEEPROM(const uint8_t* data) {
 }
 
 bool commands::loadCommand(uint8_t* packet, uint8_t size) {
-    uint8_t i = 0;
     bool expectResponse = false;
 
     if(!qCommands.empty()) {
@@ -229,14 +228,12 @@ void loadRawWeather(const uint8_t* data) {
 
 
 void commands::getReply(const uint8_t* packet, uint8_t size) {
-    uint8_t i = 0;
-
     uint8_t command = packet[0];
 
     if(command == COMMAND_GET_WEATHER) {
         loadRawWeather(packet + 1);
     } else if(command == COMMAND_GET_SETTINGS) {
-        //TODO: Process get settings Command
+        readEEPROM(packet + 1);
     } else if(command == COMMAND_GET_STATUS) {
         readStatus(packet + 1);
     }

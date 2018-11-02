@@ -78,6 +78,7 @@ namespace commands {
         extern float battery;
         extern float battery_temp;
         extern uint8_t lost_packets;
+        extern bool isReporting;
     }
 
     namespace weather {

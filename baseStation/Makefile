@@ -4,17 +4,17 @@ TIME=/usr/bin/time --format="Build Duration: %E"
 # directories
 
 # .h directory
-IDIR = src
+IDIR = includes
 # .cpp directory
 SRCDIR = src
 # .o directory
 ODIR=bin
-LIB_INC=-I/usr/local/include
+LIB_INC=-I/usr/local/include -I/usr/include/python3.5
 LIB=-L/usr/local/lib -L/usr/lib
-LIBS=-lrf24 -lwiringPi -lmariadbclient -lmysqlcppconn -lsystemd
+LIBS=-lrf24 -lwiringPi
 LINKS=
 
-PROG_NAME=baseStation
+PROG_NAME=basestation.so
 
 
 all:
@@ -38,21 +38,21 @@ INCLUDES = -I$(IDIR) $(LIB_INC) $(LIB) $(LIBS)
 
 
 # Dependency files
-_DEPS = main.h radio.h eprom.h weather.h commands.h sql.h
+_DEPS = main.h radio.h commands.h basestationmodule.h
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 
 # object files
-_OBJ = main.o radio.o eprom.o weather.o commands.o sql.o
+_OBJ = main.o radio.o commands.o basestationmodule.o
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 
 
 # generate .o  files
 $(ODIR)/%.o: $(SRCDIR)/%.cpp $(DEPS)
-	$(CXX) $(CFLAGS) $(INCLUDES) -c -o $@ $< 
+	$(CXX) $(CFLAGS) $(INCLUDES) -fpic -c -o $@ $< 
 
 # compile the main program
 $(PROG_NAME): $(OBJ)
-	$(CXX) $(CFLAGS) $(INCLUDES) -o $@ $^ $(LINKS)
+	$(CXX) -shared $(CFLAGS) $(INCLUDES) -o $@ $^ $(LINKS)
 
 
 # Clear the binaries

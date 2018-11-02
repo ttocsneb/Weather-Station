@@ -8,10 +8,6 @@
 #include <stdexcept>
 #include <array>
 
-#ifndef _WIN32
-#include <systemd/sd-daemon.h>
-#endif
-
 
 #include "main.h"
 #include "radio.h"
