@@ -111,6 +111,7 @@ void status_got_wrapper() {
     PyDict_SetItemString(status, "battery", PyFloat_FromDouble(commands::status::battery));
     PyDict_SetItemString(status, "battery_temp", PyFloat_FromDouble(commands::status::battery_temp));
     PyDict_SetItemString(status, "lost_packets", PyLong_FromLong(commands::status::lost_packets));
+    PyDict_SetItemString(status, "isReporting", PyLong_FromLong(commands::status::isReporting));
 
     PyObject_CallObject(callback_get_status, PyTuple_Pack(1, status));
 }

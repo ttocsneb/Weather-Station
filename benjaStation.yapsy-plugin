@@ -1,8 +1,0 @@
-[Core]
-Name = Benja Station
-Module = benjaStation
-
-[Documentation]
-Author = Ben Jacobs
-Version = 0.01
-Description = A remote weather station that is interfaced through the RF24L01+ chip
