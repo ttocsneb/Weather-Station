@@ -220,6 +220,8 @@ class Station:
 
             self.raw_weather.real_data = True
 
+        delay /= 1000.0
+
         return success, delay
 
     def restart_station(self):

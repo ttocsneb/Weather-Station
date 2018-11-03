@@ -3,9 +3,7 @@ from datetime import datetime
 from collections import deque
 
 from .station import Station
-
-# TODO: remove temporary settings
-refresh_time = 30
+from .settings import settings
 
 
 class Wind:
@@ -62,7 +60,7 @@ class Weather:
         # Process Rain
 
         # Rain Hour
-        while len(self._queue_rain_hour) >= 3600 / refresh_time:
+        while len(self._queue_rain_hour) >= 3600 / settings.refresh_time:
             self._queue_rain_hour.popleft()
 
         self._queue_rain_hour.append(self._station.raw_weather.rain)
