@@ -2,7 +2,7 @@ import math
 from datetime import datetime
 from collections import deque
 
-from .station import Station
+from . import radio
 from .settings import settings
 
 
@@ -15,8 +15,8 @@ class Wind:
 
 class Weather:
 
-    def __init__(self, station: Station):
-        self._station = station
+    def __init__(self, rad: radio.Radio):
+        self._radio = rad
         self._queue_rain_hour = deque()
         self._current_day = 0
 
@@ -42,10 +42,10 @@ class Weather:
         # Process Wind
 
         # Process Humidity
-        self.humidity = self._station.raw_weather.humidity / 10.0
+        self.humidity = self._radio.commands.raw_weather.humidity / 10.0
 
         # Process Temperature
-        self.temperature = self._station.raw_weather.temperature / 10.0
+        self.temperature = self._radio.commands.raw_weather.temperature / 10.0
 
         # Process Dewpoint
         temp_calc = ((17.625 * self.temperature) / (243.04 + self.temperature))
@@ -55,7 +55,8 @@ class Weather:
 
         # Process pressure
         # convert dpa to inhg
-        self.pressure = self._station.raw_weather.pressure * 0.0029529983071445
+        self.pressure = \
+            self._radio.commands.raw_weather.pressure * 0.0029529983071445
 
         # Process Rain
 
@@ -63,7 +64,7 @@ class Weather:
         while len(self._queue_rain_hour) >= 3600 / settings.refresh_time:
             self._queue_rain_hour.popleft()
 
-        self._queue_rain_hour.append(self._station.raw_weather.rain)
+        self._queue_rain_hour.append(self._radio.commands.raw_weather.rain)
 
         # Rain Day
         # reset the rain_day counter at midnight
@@ -73,17 +74,18 @@ class Weather:
                 self.rain_day = 0
             self._current_day = curr_hour
 
-        self.rain_day += self._station.raw_weather.rain
+        self.rain_day += self._radio.commands.raw_weather.rain
 
         # Wind
 
-        self.current_wind.speed = self._station.raw_weather.wind_speed
-        self.current_wind.dir = self._station.raw_weather.wind_dir * 45
+        self.current_wind.speed = self._radio.commands.raw_weather.wind_speed
+        self.current_wind.dir = self._radio.commands.raw_weather.wind_dir * 45
 
-        self.max_wind.speed = self._station.raw_weather.max_wind_speed
-        self.max_wind.dir = self._station.raw_weather.max_wind_dir * 45
+        self.max_wind.speed = self._radio.commands.raw_weather.max_wind_speed
+        self.max_wind.dir = self._radio.commands.raw_weather.max_wind_dir * 45
 
-        self.average_wind.speed = self._station.raw_weather.avg_wind_speed
-        self.average_wind.dir = self._station.raw_weather.avg_wind_dir
+        self.average_wind.speed = \
+            self._radio.commands.raw_weather.avg_wind_speed
+        self.average_wind.dir = self._radio.commands.raw_weather.avg_wind_dir
 
-        self._station.reset_weather()
+        self._radio.commands.reset_weather()

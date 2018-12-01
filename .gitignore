@@ -143,5 +143,6 @@ venv.bak/
 # Workspace stuff
 
 *coppermind*
+sync.sh
 
 benjaStation/data

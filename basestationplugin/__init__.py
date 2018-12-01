@@ -6,15 +6,15 @@ import flask
 from blueweather.plugin import types
 
 
-from . import station, weather
+from . import station, weather, radio
 from .settings import settings
 
 
 class BasestationThread(threading.Thread):
 
-    def __init__(self, station_obj, weather_obj):
+    def __init__(self, rad: radio.Radio, weather_obj: weather.Weather):
         super().__init__()
-        self._station = station_obj
+        self._radio = rad
         self._weather = weather_obj
 
         self._stop_event = threading.Event()
@@ -26,7 +26,7 @@ class BasestationThread(threading.Thread):
         return self._stop_event.is_set()
 
     def _loop(self):
-        _, delay = self._station.update_radio()
+        _, delay = self._radio.update()
         self._weather.process()
 
         if self.stopped():
@@ -47,16 +47,15 @@ class BasestationPlugin(types.StartupPlugin,
 
     def __init__(self):
         super().__init__()
-        self._station = station.Station()
-        self._weather = weather.Weather(self._station)
+        self._radio = radio.Radio()
+        self._weather = weather.Weather(self._radio)
 
-        self._station_thread = BasestationThread(self._station, self._weather)
+        self._station_thread = BasestationThread(self._radio, self._weather)
 
     # StartupPlugin
 
     def on_startup(self, host, port):
-        # Initialize the radio
-        self._station.begin_radio()
+        pass
 
     def on_after_startup(self):
         self._station_thread.start()

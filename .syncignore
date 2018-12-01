@@ -1,0 +1,8 @@
+lib
+
+schematics
+weatharStation_Old
+
+*.xlsx
+
+.vscode
