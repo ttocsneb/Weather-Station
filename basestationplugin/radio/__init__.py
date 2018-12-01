@@ -22,7 +22,9 @@ class Radio:
     __radio = RF24(25, 0)
 
     def __init__(self, level=logging.INFO):
+        # Initialize the class objects
         self._commands = commands.Commands()
+        self._connected = False
 
         self._active = False
         self._lost_packets = 100
@@ -46,7 +48,7 @@ class Radio:
         radio.openWritingPipe(self.__class__.station_address)
         radio.openReadingPipe(1, self.__class__.base_address)
 
-        self.__deactivate()
+        self.deactivate()
 
         radio.printDetails()
 
@@ -57,6 +59,11 @@ class Radio:
         return self._commands
 
     def _checkForPacket(self):
+        """
+        Check if there is any available packet
+
+        Process any available packet.
+        """
         if self.active:
             available, _ = self.__class__.__radio.available()
             if available:
@@ -65,10 +72,17 @@ class Radio:
                 packet = Packet(packet=data)
                 self._commands.getReply(packet)
 
+                self._connected = True
+
                 return True
         return False
 
     def _sendPackets(self):
+        """
+        Send all the packets in the Queue
+
+        :return bool: True if a response is expected from the station
+        """
         expectResponse = False
 
         while self._commands.moreCommands():
@@ -79,40 +93,65 @@ class Radio:
             if expectResp:
                 expectResponse = True
 
-            if not self.__class__.__radio.write(packet):
+            if not self.__class__.__radio.write(packet.value):
                 self._logger.error("Could not Send Command!")
+                self._connected = False
                 return expectResponse
 
         return expectResponse
 
     def _sendCommands(self):
-        self.__deactivate()
+        """
+        Send All the commands in the queue
+
+        If there are any expected replies, wait for them.
+        """
+        self.__class__.__radio.stopListening()
 
         if self._sendPackets():
             self._logger.log("Expecting Reply")
-            self.__activate()
+            self.__class__.__radio.startListening()
             time.sleep(0.5)
             if not self.__class__.__radio.available()[0]:
                 self._logger.error("No Reply has come!")
+                self._connected = False
             while self.__class__.__radio.available()[0]:
                 data = self.__class__.__radio.read()
                 packet = Packet(packet=data)
                 self._commands.getReply(packet)
 
-    def update(self):
-        successful = False
-        reloadTime = 0
+    def update_weather(self):
+        """
+        Update the Weather.
 
+        Should be called once every `settings.refresh_time`
+
+        In the event of a timing drift, a number of seconds will be given to
+        adjust the time between calls
+
+        Example:
+        ```
+        success, time_adjust = radio.update_weather()
+
+        time.sleep(30 + time_adjust)
+        ```
+
+        :return bool: whether the weather was successfully retreived
+        :return int: number of seconds to adjust the timing by
+        """
+        successful = False
         reloadTime = 0
 
         self.__activate()
         self.__class__.__radio.startListening()
 
+        # ============ Recover from A sync Error  ============ 
         if self._lost_packets > 1:
             self._logger.log("Out of Sync, Resyncing..")
 
             self._lost_packets = 0
 
+            # Wait an entire Refresh time for the packet.
             count = 0
             for count in range(settings.refresh_time / settings.listen_time):
                 successful = self._checkForPacket()
@@ -123,10 +162,12 @@ class Radio:
             if successful:
                 self._sendCommands()
             else:
+                self._logger.error(
+                    "Could Not Resync! Is the radio on or in range?")
                 self._lost_packets += 1
 
             self.__class__.__radio.stopListening()
-            self.__deactivate()
+            self.deactivate()
 
             if successful:
                 self._logger.log("Received Packet, Syncing..")
@@ -134,9 +175,11 @@ class Radio:
                 return True, \
                     count * settings.listen_time - settings.refresh_time / 2
 
+            self._connected = False
             return False, 0
-        else:
+        else:  # ============ Standard Operation ============ 
 
+            # Wait for a packet
             count = 0
             for count in range(4):
                 successful = self._checkForPacket()
@@ -144,19 +187,22 @@ class Radio:
                     break
                 time.sleep(settings.listen_time)
 
+            # Determine the offset time
             count -= (4 / 2)
             if count is not 0:
                 reloadTime = count * settings.listen_time
                 self._logger.log("Desynced by {}s".format(reloadTime))
 
+            # Send any commands if the 
             if successful:
                 self._lost_packets = min(self._lost_packets - 1, 0)
                 self._sendCommands()
             else:
                 self._lost_packets += 1
+                self._connected = False
 
         self.__class__.__radio.stopListening()
-        self.__deactivate()
+        self.deactivate()
 
         return successful, reloadTime
 
@@ -165,11 +211,17 @@ class Radio:
         return self._active
 
     def __activate(self):
+        """
+        Activate the Radio and turn on the debug led
+        """
         self._active = True
         GPIO.output(self.__class__.debug_led_pin, GPIO.HIGH)
         self.__class__.__radio.powerUp()
 
-    def __deactivate(self):
+    def deactivate(self):
+        """
+        Deactivate the Radio and turn off the debug led
+        """
         self._active = False
         GPIO.output(self.__class__.debug_led_pin, GPIO.LOW)
         self.__class__.__radio.powerDown()

@@ -39,8 +39,6 @@ class Weather:
         This should be called once after `Station.update_radio`.
         """
 
-        # Process Wind
-
         # Process Humidity
         self.humidity = self._radio.commands.raw_weather.humidity / 10.0
 
