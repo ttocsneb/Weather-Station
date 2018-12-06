@@ -59,15 +59,19 @@ class BasestationPlugin(types.StartupPlugin,
     # StartupPlugin
 
     def on_startup(self, host, port):
-        self._radio = radio.Radio(self._logger.level)
+        self._radio = radio.Radio(
+            "{}.radio".format(self._logger.name),
+            self._logger.level)
         self._weather = weather.Weather(self._radio)
 
         self._station_thread = BasestationThread(self._radio, self._weather)
 
     def on_after_startup(self):
+        self._logger.info("Starting Radio Thread..")
         self._station_thread.start()
 
     def on_shutdown(self):
+        self._logger.info("Waiting for Radio to stop..")
         self._station_thread.stop()
         self._station_thread.join()
 

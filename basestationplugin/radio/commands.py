@@ -3,7 +3,7 @@ import enum
 
 import threading
 
-from radio.packet import Packet, Command
+from .packet import Packet, Command
 
 
 class Callable_Command(threading.Thread):
